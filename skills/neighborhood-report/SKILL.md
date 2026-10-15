@@ -21,9 +21,12 @@ T="/Users/andrewgarcia/Obsidian-Vault/Brain/Real Estate/Market Intel/Neighborhoo
 |---|---|
 | **Lite** (default) | A shortlist already exists (Andrew's PDF or doc, a Matrix pull), 10 homes or fewer, and the client named what matters (beach, a path, a commute, a park). Kit: `Neighborhood Map Lite/` (read its `README.md`). |
 | **Lite, anchors mode** | Same as Lite, but the client's fixed places (school, work, a gym) drive the choice instead of the beach. `"mode": "anchors"` in `client.json`; Lite README, "Anchors mode". First client: Jensen, 2026-10-14 (revamped from Full). |
-| **Full** (steps 1 to 9 below) | The client is choosing between several neighborhoods and two fixed anchors drive it (school + work), or there's no shortlist yet. |
+| **Lite, anchors + areas** (replaces the bubble report, Andrew 2026-10-15) | The client is choosing between several neighborhoods. Same anchors page plus an `areas` list in `client.json`: an Areas row (homes, rent range, quickest time, places-only summary) that filters the map and list. Lite README, "Areas". |
+| **Full bubble tool** (legacy) | Only to update a report already built with it. New clients use Lite. No score rings in new work. |
 
 Why: [[Neighborhood Map Lite — Kevin Run Review (2026-10-14)]]. Andrew called Kevin's Lite map "very good".
+
+When there's no shortlist yet, run the Matrix search first (step 2 of the full path below), then build with Lite.
 
 ### Lite path (target 20 minutes)
 

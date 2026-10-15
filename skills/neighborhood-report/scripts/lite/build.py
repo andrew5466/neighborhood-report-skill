@@ -53,6 +53,35 @@ def finish(root, cfg, data, homes, template, extra):
     print("Wrote %s (%.0f KB, %d homes)" % (out, out.stat().st_size / 1024, len(homes)))
 
 
+
+def check_areas(cfg, homes):
+    """Areas (the simplified bubble report): client.json "areas" = [{"name", "summary", "center": [lat, lon] (only for an
+    area with no homes)}]; each listing's "area" must match one name. Area copy is scanned with the full tool's
+    fair-housing rules: places only, never who lives there, never a school rating."""
+    areas = cfg.get("areas") or []
+    if not areas:
+        return []
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("nr_tool_build", TOOL / "build.py")
+    tool = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(tool)
+    errors, names = [], [a["name"] for a in areas]
+    for a in areas:
+        for field in ("name", "summary"):
+            text = tool.PROPERTY_TYPES_RE.sub(" ", a.get(field, ""))
+            hit = tool.PEOPLE_RE.search(text) or tool.SCHOOL_RATING_RE.search(text)
+            if hit:
+                errors.append("area %r %s says %r. Describe places, not people, and never rate schools (fair housing)." % (a["name"], field, hit.group(0)))
+        if not any(h["area"] == a["name"] for h in homes) and not a.get("center"):
+            errors.append("area %r has no homes and no center" % a["name"])
+    for h in homes:
+        if h["area"] not in names:
+            errors.append("home %s has area %r, which is not in client.json areas" % (h["id"], h["area"]))
+    if errors:
+        raise SystemExit("ERROR:\n  " + "\n  ".join(errors))
+    return [{"name": a["name"], "summary": a.get("summary", ""), "center": a.get("center")} for a in areas]
+
+
 def main_anchors(root, cfg):
     """Anchors mode: the client's fixed places (school, work...) lead every card, with a route to each."""
     listings = json.loads((root / "data/listings.json").read_text())
@@ -80,7 +109,8 @@ def main_anchors(root, cfg):
     data = {"slug": cfg["slug"], "title": cfg["title"], "homes": homes, "anchors": anchors,
             "waterLabels": cfg.get("waterLabels", []),
             "base": {k: base[k] for k in ("frame", "scale", "roadClasses", "sea", "islands", "water", "parks", "roads", "labels", "names")},
-            "onehome": cfg["onehome"], "routeNote": cfg.get("routeNote", ""), "filters": cfg.get("filters", [])}
+            "onehome": cfg["onehome"], "routeNote": cfg.get("routeNote", ""), "filters": cfg.get("filters", []),
+            "areas": check_areas(cfg, homes)}
     finish(root, cfg, data, homes, "template-anchors.html", {})
 
 

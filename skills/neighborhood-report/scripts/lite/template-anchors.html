@@ -162,6 +162,17 @@ footer p { margin: 0 }
 
 /* anchors mode */
 #filter { flex-basis: 100%; width: max-content }
+.areas { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 4px; scroll-snap-type: x proximity }
+.area { all: unset; box-sizing: border-box; cursor: pointer; flex: 0 0 auto; width: min(78vw, 250px); scroll-snap-align: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; align-content: start }
+.area[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) }
+.area:focus-visible { outline: 3px solid var(--walk); outline-offset: 2px }
+.area b { font: 700 1rem var(--f-display); letter-spacing: .02em }
+.area .stat { font: 600 .82rem var(--f-mono); font-variant-numeric: tabular-nums; color: var(--ink) }
+.area .sum { font-size: .82rem; color: var(--muted); line-height: 1.35 }
+.area.empty .stat { color: var(--muted) }
+.albl { position: absolute; transform: translate(-50%, 22px); white-space: nowrap; pointer-events: none; font: 700 11px var(--f-display);
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink); text-shadow: 0 0 3px var(--land), 0 0 3px var(--land), 0 0 2px var(--land); opacity: .8 }
 [hidden] { display: none !important }
 :root { --a0: #c2410c; --a1: #4338ca; --a2: #0f766e; --fit: #1d7f55 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --fit: #4fc28f } }
@@ -183,6 +194,8 @@ footer p { margin: 0 }
     <p class="lede">{{LEDE}}</p>
     <p class="byline">{{BYLINE}}</p>
   </header>
+
+  <nav class="areas" id="areas" aria-label="Areas" hidden></nav>
 
   <div class="grid">
     <section class="mapcol" aria-label="Map">
@@ -299,15 +312,19 @@ footer p { margin: 0 }
   $("#sort").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) sortBy(b.dataset.sort); });
   sortBy(SORTS[store.get("sort:" + D.slug)] ? store.get("sort:" + D.slug) : order[0]);
 
-  // filter: homes vs apartments (client.json "filters"; each listing has "kind")
-  let curFilter = "all";
-  function applyFilter(k) {
-    curFilter = k;
+  // filters: homes vs apartments (client.json "filters"; each listing has "kind") and the area row; both apply together
+  let curFilter = "all", curArea = "all";
+  const shown = (h) => (curFilter === "all" || h.kind === curFilter) && (curArea === "all" || h.area === curArea);
+  function applyView() {
     D.homes.forEach((h) => {
-      const show = k === "all" || h.kind === k;
+      const show = shown(h);
       document.getElementById("h-" + h.id).hidden = !show;
       if (mapApi && mapApi.show) mapApi.show(h.id, show);
     });
+  }
+  function applyFilter(k) {
+    curFilter = k;
+    applyView();
     document.querySelectorAll("#filter button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === k));
     store.set("filter:" + D.slug, k);
   }
@@ -318,6 +335,34 @@ footer p { margin: 0 }
     $("#filter").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) applyFilter(b.dataset.f); });
     const saved = store.get("filter:" + D.slug);
     applyFilter(D.filters.some((f) => f.key === saved) ? saved : "all");
+  }
+
+  // areas: the simplified bubble report. One card per area: homes, rent range, quickest time to the first anchor, places summary
+  function applyArea(name, frame) {
+    curArea = name;
+    applyView();
+    document.querySelectorAll("#areas .area").forEach((b) => { b.setAttribute("aria-pressed", b.dataset.area === name); if (b.dataset.area === name && frame) b.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); });
+    store.set("area:" + D.slug, name);
+    if (frame && mapApi && mapApi.frameArea) mapApi.frameArea(name);
+  }
+  if (D.areas && D.areas.length) {
+    const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
+    const card = (name, label, sum) => {
+      const hs = D.homes.filter((h) => name === "all" || h.area === name);
+      const rents = hs.map((h) => h.rent).filter(Boolean);
+      const times = hs.map((h) => rmin(h, A0.key)).filter((x) => x != null);
+      const stat = hs.length
+        ? `${hs.length} ${hs.length === 1 ? "home" : "homes"} · ${rents.length ? money(Math.min(...rents)) + (rents.length > 1 && Math.max(...rents) !== Math.min(...rents) ? "–" + money(Math.max(...rents)) : "") : ""}`
+        : "No homes shortlisted here";
+      const mode = A0.profile === "foot" ? "walk" : A0.profile === "bike" ? "ride" : "drive";
+      const fast = times.length ? `<span class="stat">Quickest: ${Math.min(...times)} min ${mode} to ${esc(A0.label)}</span>` : "";
+      return `<button class="area${hs.length ? "" : " empty"}" data-area="${esc(name)}" aria-pressed="false"><b>${esc(label)}</b><span class="stat">${stat}</span>${fast}${sum ? `<span class="sum">${esc(sum)}</span>` : ""}</button>`;
+    };
+    $("#areas").innerHTML = card("all", "All areas", "") + D.areas.map((a) => card(a.name, a.name, a.summary)).join("");
+    $("#areas").hidden = false;
+    $("#areas").addEventListener("click", (e) => { const b = e.target.closest(".area"); if (b) applyArea(b.dataset.area, true); });
+    const savedArea = store.get("area:" + D.slug);
+    applyArea(D.areas.some((a) => a.name === savedArea) ? savedArea : "all", false);
   }
 
   function openCard(id) {
@@ -537,7 +582,21 @@ footer p { margin: 0 }
     if (from === "map") { openCard(id); document.getElementById("h-" + id).scrollIntoView({ block: "nearest", behavior: "smooth" }); }
   }
   mapApi = { select, show: (id, on) => { const m = markers[id].mk; on ? m.addTo(map) : map.removeLayer(m); if (!on && cur === id) { cancelAnimationFrame(anim); selG.clearLayers(); cur = null; } } };
-  if (D.filters && D.filters.length) applyFilter(curFilter);
+  mapApi.frameArea = (name) => {
+    cancelAnimationFrame(anim); selG.clearLayers();
+    if (cur) { markers[cur].mk.setIcon(markers[cur].icon(false)); cur = null; }
+    const hs = D.homes.filter(shown);
+    const a = (D.areas || []).find((x) => x.name === name);
+    if (name === "all" || !a) { fitAll(); return; }
+    if (hs.length) map.fitBounds(L.latLngBounds(hs.map((h) => [h.lat, h.lon])).pad(0.3), { maxZoom: 16, padding: [20, 20] });
+    else if (a.center) map.setView(a.center, 15);
+  };
+  (D.areas || []).forEach((a) => {
+    const hs = D.homes.filter((h) => h.area === a.name);
+    const at = hs.length ? [hs.reduce((s, h) => s + h.lat, 0) / hs.length, hs.reduce((s, h) => s + h.lon, 0) / hs.length] : a.center;
+    if (at) L.marker(at, { interactive: false, keyboard: false, pane: "base", icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<span class="albl">${esc(a.name)}</span>` }) }).addTo(map);
+  });
+  applyView();
 
   const toggle = (btn, g) => $(btn).addEventListener("click", (e) => {
     const on = e.currentTarget.getAttribute("aria-pressed") !== "true";

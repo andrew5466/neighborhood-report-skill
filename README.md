@@ -10,7 +10,8 @@ Private. Client data never goes in this repo; it lives in the vault.
 |---|---|---|
 | **Lite, beach mode** (default) | A shortlist exists, 10 homes or fewer, and the client named priorities (beach, a path, bike lanes) | One map with the priority layers (Beachwalk, bike lanes, beach sand, one place type), walk and bike routes with a bike icon riding the route, first listing photo, collapsed name-and-price cards, Beach / Bike / Privacy rows, red and gold flags, sort switch, compare up to 3, Interested / Pass, OneHome buttons |
 | **Lite, anchors mode** | Same, but fixed places drive the choice (school, work, a gym) | The same page, with routes and minutes to each anchor instead of the beach |
-| **Full bubble report** | The client is choosing between several neighborhoods | Area bubbles that burst into a map of every home; lives in the separate [`neighborhood-report-tool`](https://github.com/andrew5466/neighborhood-report-tool) repo |
+| **Lite, anchors + areas** | The client is choosing between several neighborhoods (replaces the bubble report) | The anchors page with an Areas row: one card per neighborhood (homes, rent range, quickest time, places-only summary) that filters the map and list. Area copy passes the same fair-housing check as the bubble tool |
+| **Full bubble report** (legacy) | Only to update a report already built with it | Area bubbles that burst into a map of every home; lives in the separate [`neighborhood-report-tool`](https://github.com/andrew5466/neighborhood-report-tool) repo, which `build.py` also reads for base maps, the Leaflet CSS and the fair-housing word list |
 
 ## Layout
 
