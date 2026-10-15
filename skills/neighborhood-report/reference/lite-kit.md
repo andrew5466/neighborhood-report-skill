@@ -84,3 +84,26 @@ For clients driven by fixed places rather than the beach. First client: Jensen M
 - Straight-line distances are so they come out shorter than the shortlist's routed figures (Costa Brava: 1.2 mi straight vs 1.7 mi by route). The page says so.
 - The priority set is beach / path / bike / one place type. Another priority (a park, a gym, a train stop) needs a new layer in `process.py`, `build.py` and the template; that's a tool session, not a client run.
 - Units in the same building share one address point, so their distances are the same.
+
+
+## Data retrieval (2026-10-15)
+
+Shared store, reused by every client (kept in the vault, not in the client folders):
+
+| Path | What it is |
+|---|---|
+| `db/listings/<MLS>.json` | One record per listing: `matrix` (status, list price, rent period, furnished, beds/baths, size, style → lease kind, year; from the Matrix grid) and `bex` (listing-page facts, remarks, lease phrases, floor, view, photo, coordinates), each dated |
+| `db/buildings.json` | Building facts (gym, guests, entrance, building, beach, OneHome link), used when a client folder has none |
+| `db/places.json` | Verified places for anchors (Mila, Catch, Carbone, the Delano, Lincoln Road, the beach) |
+| `db/cache/` | Every network answer, dated (geocodes and routes forever, listing pages 2 days) |
+
+| Script | What it does |
+|---|---|
+| `fetchcache.py` | The one HTTP layer: cache + polite spacing per host |
+| `fetch_listings.py` | Listing facts and photos by MLS from the public listing page; `--mls A1 A2` for a quick look |
+| `matrix_grid.js` + `ingest_matrix.py` | The Matrix results grid in 1-2 compact calls → `db/listings` |
+| `draft_cards.py` | Card drafts from Matrix + listing data (`--write` merges, keeping hand-written details) |
+| `status.py` | One screen: per home status, price, period, facts, photo, routes, Confirm count, and what to run next |
+| `lite.py` | The whole pipeline in one command; a rerun takes about 3 seconds |
+
+Why and the numbers: Data Retrieval — Algorithm Review (2026-10-15).

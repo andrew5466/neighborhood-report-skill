@@ -12,8 +12,10 @@ Route times are the service's estimates for an average walker or rider. Map data
 import json
 import sys
 import time
-import urllib.request
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fetchcache import get_json, summary  # noqa: E402
 
 UA = "AMG-map-lite/1.0 (andrew2000garcia@gmail.com)"
 BASE = "https://routing.openstreetmap.de/routed-%s/route/v1/driving/%f,%f;%f,%f?overview=full&geometries=geojson"
@@ -30,9 +32,9 @@ def encode(pts):
 
 
 def route(profile, a, b):
-    req = urllib.request.Request(BASE % (profile, a[1], a[0], b[1], b[0]), headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=60) as r:
-        res = json.loads(r.read().decode("utf-8"))
+    # cached forever in <kit>/db/cache (fetchcache): a route between two fixed points doesn't change, so a building
+    # routed for one client is free for the next; the 1-request-per-second spacing applies only to real fetches
+    res, _, _ = get_json(BASE % (profile, a[1], a[0], b[1], b[0]), ttl_days=None, gap=1.1)
     if res.get("code") != "Ok" or not res.get("routes"):
         raise RuntimeError("%s route failed: %s" % (profile, res.get("code")))
     rt = res["routes"][0]
@@ -58,11 +60,11 @@ def main_anchors(root, cfg, listings):
             if key not in cache:
                 dest = tuple(measures[L["id"]]["point"][a["key"]]) if a.get("shape") else (a["lat"], a["lon"])
                 cache[key] = dict(route(prof, home, dest), profile=prof)
-                time.sleep(1.1)
             out[L["id"]][a["key"]] = cache[key]
         print("%-34s %s" % (L["name"] + " " + L.get("unit", ""), " | ".join(
             "%s %2d min %s (%.2f mi)" % (a["short"], out[L["id"]][a["key"]]["min"], a.get("profile", "car"), out[L["id"]][a["key"]]["mi"]) for a in cfg["anchors"])))
     (root / "data/routes.json").write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    print(summary())
 
 
 def main(root):
@@ -80,15 +82,14 @@ def main(root):
         key = "%f,%f" % home
         if key not in cache:
             walk = route("foot", home, tuple(m["beachPoint"]))
-            time.sleep(1.1)
             bike = route("bike", home, tuple(m["beachwalkPoint"]))
-            time.sleep(1.1)
             cache[key] = {"walk": walk, "bike": bike}
         out[L["id"]] = cache[key]
         r = out[L["id"]]
         print("%-30s walk to sand %2d min (%.2f mi) | bike to %s %2d min (%.2f mi)" % (
             L["name"] + " " + L["unit"], r["walk"]["min"], r["walk"]["mi"], cfg["path"]["label"], r["bike"]["min"], r["bike"]["mi"]))
     (root / "data/routes.json").write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    print(summary())
 
 
 if __name__ == "__main__":

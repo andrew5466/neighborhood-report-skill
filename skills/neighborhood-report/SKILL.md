@@ -54,6 +54,27 @@ C="/Users/andrewgarcia/Obsidian-Vault/Brain/Real Estate/Market Intel/<Client> Ma
 
 **What the page does (no per-client code):** collapsed cards (number, name, price) that open one at a time; photo; Beach (walk minutes by route + straight-line), Bike (ride minutes to the path), Privacy; red/gold flags; Interested / Pass + Compare buttons; sort switch (Beach / Rent / Ride); compare table of up to 3 homes; Copy my picks; map with the path, bike lanes, sand, the place type, and on tap the walking route plus a bike icon riding the bike route.
 
+### Data retrieval: the fast path (2026-10-15, halves tokens and time)
+
+Why: [[Data Retrieval — Algorithm Review (2026-10-15)]]. The research agents alone cost 293k tokens and 14 minutes on Crash Pad Sobe; this path does the same in under a minute and about 10k tokens.
+
+```bash
+K="/Users/andrewgarcia/Obsidian-Vault/Brain/Real Estate/Market Intel/Neighborhood Map Lite/scripts"
+C="<client folder>"
+python3 -I "$K/status.py" "$C"                    # start here: what exists, what's missing; read this, not the data files
+python3 -I "$K/lite.py" "$C" --range 5000 6500   # listings -> card drafts -> distances -> routes -> photos -> build -> status
+```
+
+1. **Start from MLS numbers.** Ask Andrew for them, or search Matrix once. Read OneHome pages only when he sends links without MLS numbers.
+2. **Matrix grid (status, list price, rent period, furnished, style):** speed-bar search with every MLS comma-separated, then run `scripts/matrix_grid.js` with the browser's javascript tool. It returns compact tab-separated rows, 12 per call; if it ends with `#more N`, set `window.MLSTART = N` and run it again. Save the rows to `data/matrix-grid-<date>.tsv`, then `python3 -I "$K/ingest_matrix.py" "$C" <file>`.
+3. **Listing facts and photos:** `fetch_listings.py` (inside `lite.py`) reads each public listing page by MLS. That gives beds, baths, size, coordinates, floor, furnished, view, year, the remarks and their lease phrases, and the photo. Never use a helper agent for unit facts or photos.
+4. **Card facts:** `draft_cards.py --write` drafts every card from Matrix + listing data. Then edit only the exceptions: split plans, Andrew's notes, building facts.
+5. **Buildings and places:** reuse `db/buildings.json` and `db/places.json`. Research only buildings not there, with one helper agent and an exact field list (gym, guest access, entrance, year, floors, beach). Add the result to `db/buildings.json` with its date and source.
+6. **Checks:** `status.py`, plus JavaScript assertions in the browser pane (counts, no sideways scroll), plus one screenshot. No screenshot loops.
+7. **Per-building OneHome shares** (only when asked): speed-bar the building's MLS numbers, tick each row's checkbox (the "All" link and header box don't always register), Share Link, name "<Client> <building>", Generate Link, read the URL from the dialog's input with JavaScript, Cancel. Open each link once to confirm the count. If a click freezes the tab (a native dialog), open a new tab and continue.
+
+Network runs only in the main session (the harness denies helper agents). Every script prints at most one line per home.
+
 **Kevin & James rules (Andrew, 2026-10-15):** a client report is a **market report**: show every home Andrew sends (no top-4 picks; the client chooses), grouped as Andrew groups them, each group with its own OneHome link; filters keep the page short; homes above the range are there for reference, with no red flags (`noFlags`); a walk over 20 minutes is shown in miles (`maxWalkMin: 20`); no animations (`noMover`); map at the bottom; buildings first, units underneath (`layout: "buildings"`). The client's named places only (no clubs, pizza, bikes or gyms they didn't name). Example: `Kevin & James Map/client.json`.
 
 **Client page rules (Andrew, 2026-10-14):** cards collapsed to number, name and price; the client's priorities lead each open card; no agent opinion on the page ("Andrew's pick", "best building"); no restated brief section. Gates below still apply.

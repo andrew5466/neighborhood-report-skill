@@ -137,7 +137,11 @@ def main_anchors(root, cfg):
     template = "template-anchors.html"
     if cfg.get("layout") == "buildings":
         # buildings layout: groups (sections) of buildings, each building's walks and facts once, its units underneath
-        data["buildings"] = json.loads((root / "data/buildings.json").read_text())
+        # client facts first; any building the client folder lacks comes from the shared store (db/buildings.json)
+        shared = json.loads((KIT.parent / "db/buildings.json").read_text()) if (KIT.parent / "db/buildings.json").exists() else {}
+        own = json.loads((root / "data/buildings.json").read_text()) if (root / "data/buildings.json").exists() else {}
+        need = {h["building"] for h in homes}
+        data["buildings"] = {k: own.get(k) or shared.get(k) for k in need if own.get(k) or shared.get(k)}
         missing = sorted({h["building"] for h in homes} - set(data["buildings"]))
         if missing or not cfg.get("sections"):
             raise SystemExit("ERROR: buildings layout needs data/buildings.json entries for %s and client.json sections" % (missing or "-"))

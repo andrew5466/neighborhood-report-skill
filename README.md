@@ -24,6 +24,7 @@ skills/
     reference/
       lite-kit.md             the Lite kit: page, files, client folder, commands, limits
       process-lessons.md      what the first runs taught (no client details)
+      data-retrieval-review.md  the Algorithm Review behind the fast data path (tokens and time halved)
     scripts/
       lite/
         fetch_osm.py          network: geocodes + one Overpass pull (paths, bike lanes, beach, coastline)
@@ -31,10 +32,18 @@ skills/
         fetch_routes.py       network: walk and bike routes (OSRM, routing.openstreetmap.de)
         fetch_photos.py       network: first listing photo per home, shrunk to 900 px
         build.py              offline: fills the template, inlines the base map, refuses private text
+        fetchcache.py         the one HTTP layer: dated cache + polite spacing (routes/geocodes forever, pages 2 days)
+        fetch_listings.py     network: listing facts, remarks, lease phrases, floor, view, photo by MLS (no agent)
+        matrix_grid.js        run in the Matrix results page: the grid as compact rows, 12 per call
+        ingest_matrix.py      offline: store the Matrix rows (status, price, rent period, style → lease kind)
+        draft_cards.py        offline: card drafts from Matrix + listing data
+        status.py             offline: one screen per client, what is done, missing or stale
+        lite.py               the whole pipeline in one command (a rerun takes about 3 s)
         template.html         the beach-mode page
         template-anchors.html the anchors-mode page
     assets/
       client.example.json     a placeholder client config to copy
+      db-places.json          verified places for anchors (Mila, Catch, Carbone, the Delano, Lincoln Road, the beach)
 scripts/
   build_from_vault.py         refresh this repo from the live skill and the vault kit
   check_secrets.sh            scan before every push

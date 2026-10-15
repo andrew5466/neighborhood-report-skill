@@ -1,0 +1,14 @@
+{
+ "_about": "Shared places for anchors, verified once and reused by every client. Copy the entry into client.json anchors (key, label, short, letter, profile, lat, lon, addr). Recheck an entry older than a year.",
+ "mila": {"label": "Mila", "addr": "1636 Meridian Ave, Miami Beach, FL 33139", "lat": 25.7896843, "lon": -80.1366307,
+          "source": "Michelin Guide, Fine Dining Lovers (web search 2026-10-15); OpenStreetMap Nominatim 2026-10-15", "seen": "2026-10-15"},
+ "catch": {"label": "Catch", "addr": "200 South Pointe Dr, Miami Beach, FL 33139 (at the Continuum)", "lat": 25.7678732, "lon": -80.132825,
+           "source": "catchrestaurants.com/location/catch-miami-beach, Time Out, Commercial Observer (2026-10-15); Nominatim 2026-10-15", "seen": "2026-10-15"},
+ "carbone": {"label": "Carbone", "addr": "49 Collins Ave, Miami Beach, FL 33139", "lat": 25.7692415, "lon": -80.1339296,
+             "source": "Bloomberg Linea, Time Out, carbonemiami.com (2026-10-15); Nominatim 2026-10-15", "seen": "2026-10-15"},
+ "delano": {"label": "the Delano", "addr": "1685 Collins Ave, Miami Beach, FL 33139", "lat": 25.7921238, "lon": -80.1291745,
+            "source": "Time Out, HotelPlanner, Five Star Alliance (2026-10-15); Nominatim 2026-10-15", "seen": "2026-10-15",
+            "note": "Several listings say it has been closed since March 2020 for renovation, no reopening date."},
+ "lincoln-road": {"label": "Lincoln Road", "shape": {"osmName": "Lincoln Road"}, "source": "OpenStreetMap ways named exactly 'Lincoln Road'", "seen": "2026-10-14"},
+ "beach-miami-beach": {"label": "the beach", "shape": {"osm": "beach", "minLat": 25.763}, "source": "OpenStreetMap natural=beach polygons north of 25.763 (Fisher Island excluded)", "seen": "2026-10-14"}
+}

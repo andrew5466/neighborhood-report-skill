@@ -46,8 +46,14 @@ def clean_markdown(text):
 def main():
     put(SKILL_SRC, DEST / "SKILL.md")
     for f in sorted((KIT / "scripts").iterdir()):
-        if f.suffix == ".py" or (f.suffix == ".html" and f.name.startswith("template")):
+        if f.suffix == ".py" or f.suffix == ".js" or (f.suffix == ".html" and f.name.startswith("template")):
             put(f, DEST / "scripts/lite" / f.name)
+    for name in ("places.json",):  # shared reference data with no client details; buildings/listings stay in the vault
+        if (KIT / "db" / name).exists():
+            put(KIT / "db" / name, DEST / "assets" / ("db-" + name))
+    review = KIT / "Data Retrieval — Algorithm Review (2026-10-15).md"
+    if review.exists():
+        put(review, DEST / "reference/data-retrieval-review.md", clean_markdown(review.read_text(encoding="utf-8")))
     readme = KIT / "README.md"
     put(readme, DEST / "reference/lite-kit.md", clean_markdown(readme.read_text(encoding="utf-8")))
 
