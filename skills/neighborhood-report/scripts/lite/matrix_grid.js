@@ -17,7 +17,7 @@
     const all = [];
     for (const r of rows.slice(hi + 1)) {
       const cells = [...r.cells].map((c) => c.innerText.replace(/\s+/g, " ").replace(/^¤/, "").trim());
-      if (!/^A\w?\d{7,}$/.test(cells[idx[0]] || "")) continue;
+      if (!/^[A-Z]\w?\d{7,}$/.test(cells[idx[0]] || "")) continue;  // A = Miami MLS, B = Beaches MLS feed
       const v = idx.map((i) => (i < 0 ? "" : cells[i] || ""));
       v[2] = v[2].replace(/[$,]/g, ""); v[3] = v[3].slice(0, 1); v[4] = v[4].slice(0, 1); v[8] = v[8].replace(/,/g, "");
       all.push(v.join("\t"));

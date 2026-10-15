@@ -161,6 +161,13 @@ footer p { margin: 0 }
 @media (prefers-reduced-motion: reduce) { .pin { transition: none } }
 
 /* anchors mode */
+.cardlinks { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 12px }
+.cardlinks a.act { display: inline-flex; align-items: center; text-decoration: none }
+.olinks { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line) }
+.olinks li { border-bottom: 1px solid var(--line) }
+.olinks a { display: flex; justify-content: space-between; gap: 10px; padding: 11px 2px; color: var(--ink); text-decoration: none; font-size: .92rem }
+.olinks a span:last-child { color: var(--muted); white-space: nowrap }
+.olinks b { font-family: var(--f-mono); margin-right: 4px }
 #filter { flex-basis: 100%; width: max-content }
 .areas { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 12px; margin-bottom: 4px; scroll-snap-type: x proximity }
 .area { all: unset; box-sizing: border-box; cursor: pointer; flex: 0 0 auto; width: min(78vw, 250px); scroll-snap-align: start;
@@ -335,6 +342,7 @@ footer p { margin: 0 }
         <button class="act cmpbtn" data-cmp="${h.id}" aria-pressed="false">Compare</button>
         <p class="hint" hidden></p>
       </div>
+      ${h.onehome || D.mapButton ? `<div class="cardlinks">${h.onehome ? `<a class="act" href="${esc(h.onehome.url)}" target="_blank" rel="noopener">${esc(h.onehome.label || "See on OneHome")} ↗</a>` : ""}${D.mapButton ? `<button class="act" data-showmap="${h.id}">Show on map</button>` : ""}</div>` : ""}
       <div class="more">
         <dl><dt>Rent</dt><dd>${esc(h.rentText)}. ${esc(h.rentSub)}${tag(h.rentConfirm)}</dd>
         ${h.details.map((d) => `<dt>${esc(d.k)}</dt><dd>${esc(d.v)}${tag(d.c)}</dd>`).join("")}</dl>
@@ -343,7 +351,11 @@ footer p { margin: 0 }
       </div></div>
     </article>`;
   }).join("");
-  $("#onehome").innerHTML = D.onehome.map((o) => `<a class="btn" href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.label)}</a>`).join("");
+  if (D.homes.some((h) => h.onehome)) {
+    $("#onehome").innerHTML = `<ul class="olinks">${D.homes.filter((h) => h.onehome).sort((x, y) => x.n - y.n).map((h) => `<li data-oh="${h.id}"><a href="${esc(h.onehome.url)}" target="_blank" rel="noopener"><span><b>${h.n}</b> ${esc(h.name)}${h.unit ? " #" + esc(h.unit) : ""}</span><span>${esc(h.onehome.short || "OneHome")} ↗</span></a></li>`).join("")}${D.onehome.map((o) => `<li><a href="${esc(o.url)}" target="_blank" rel="noopener"><span>${esc(o.label)}</span><span>OneHome ↗</span></a></li>`).join("")}</ul>`;
+  } else {
+    $("#onehome").innerHTML = D.onehome.map((o) => `<a class="btn" href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.label)}</a>`).join("");
+  }
   if (D.notes && D.notes.length) {
     $("#notes").innerHTML = "<h2>Notes</h2>" + D.notes.map((n) => `<p>${esc(n)}</p>`).join("");
     $("#notes").hidden = false;
@@ -531,6 +543,7 @@ footer p { margin: 0 }
 
   list.addEventListener("click", (e) => {
     const pk = e.target.closest("[data-pick]"); if (pk) { choose(pk); return; }
+    const sm = e.target.closest("[data-showmap]"); if (sm) { if (mapApi) { $("#map").scrollIntoView({ block: "start", behavior: "smooth" }); mapApi.select(sm.dataset.showmap, "button"); } return; }
     const cb = e.target.closest("[data-cmp]");
     if (cb) {
       const id = cb.dataset.cmp;
@@ -539,7 +552,7 @@ footer p { margin: 0 }
     }
     const b = e.target.closest(".head"); if (!b) return;
     if (b.getAttribute("aria-expanded") === "true") { b.setAttribute("aria-expanded", "false"); document.getElementById("b-" + b.dataset.id).hidden = true; document.getElementById("h-" + b.dataset.id).classList.remove("on"); return; }
-    openCard(b.dataset.id); if (mapApi) mapApi.select(b.dataset.id, "list");
+    openCard(b.dataset.id); if (mapApi && !D.mapButton) mapApi.select(b.dataset.id, "list");
   });
   renderCompare();
 
@@ -705,11 +718,15 @@ footer p { margin: 0 }
     const p = [h.lat, h.lon];
     let all = [p], first = null;
     // the first anchor is drawn last, so its route sits on top where the routes overlap
+    // a walk over 30 min isn't drawn when the same place is also measured by car (the card leaves it off too)
+    const longWalk = (a, r) => a.profile === "foot" && r && r.min > 30 && A.some((x) => x !== a && x.label === a.label && x.profile !== "foot");
+    const lead = A.findIndex((a) => !longWalk(a, h.r && h.r[a.key]));
     A.map((a, i) => [a, i]).reverse().forEach(([a, i]) => {
       const r = h.r && h.r[a.key];
+      if (longWalk(a, r)) return;
       const to = dest(h, a) || p;
       const pts = r ? decode(r.p, sc) : [p, to];
-      if (i === 0) first = pts;
+      if (i === lead) first = pts;
       all = all.concat(pts);
       const t = ROUTE_TOK[i] || "--ink";
       selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 8, opacity: .9, interactive: false }), () => ({ color: tok("--walk-casing") })).setStyle({ color: tok("--walk-casing") }));

@@ -62,15 +62,18 @@ Why: [[Data Retrieval — Algorithm Review (2026-10-15)]]. The research agents a
 K="/Users/andrewgarcia/Obsidian-Vault/Brain/Real Estate/Market Intel/Neighborhood Map Lite/scripts"
 C="<client folder>"
 python3 -I "$K/status.py" "$C"                    # start here: what exists, what's missing; read this, not the data files
-python3 -I "$K/lite.py" "$C" --range 5000 6500   # listings -> card drafts -> distances -> routes -> photos -> build -> status
+python3 -I "$K/fetch_listings.py" --mls A1 A2 ...  # new client: listing records first (Matrix grid too, step 2)
+python3 -I "$K/new_client.py" "$C" --title "..." --groups "Group title=A1,A2; Group 2=A3" --places beach-miami-beach,mila --range 5000 6500
+python3 -I "$K/lite.py" "$C" --range 5000 6500   # listings -> cards -> distances -> routes -> photos -> building facts -> build -> check -> status
 ```
 
 1. **Start from MLS numbers.** Ask Andrew for them, or search Matrix once. Read OneHome pages only when he sends links without MLS numbers.
 2. **Matrix grid (status, list price, rent period, furnished, style):** speed-bar search with every MLS comma-separated, then run `scripts/matrix_grid.js` with the browser's javascript tool. It returns compact tab-separated rows, 12 per call; if it ends with `#more N`, set `window.MLSTART = N` and run it again. Save the rows to `data/matrix-grid-<date>.tsv`, then `python3 -I "$K/ingest_matrix.py" "$C" <file>`.
 3. **Listing facts and photos:** `fetch_listings.py` (inside `lite.py`) reads each public listing page by MLS. That gives beds, baths, size, coordinates, floor, furnished, view, year, the remarks and their lease phrases, and the photo. Never use a helper agent for unit facts or photos.
 4. **Card facts:** `draft_cards.py --write` drafts every card from Matrix + listing data. Then edit only the exceptions: split plans, Andrew's notes, building facts.
-5. **Buildings and places:** reuse `db/buildings.json` and `db/places.json`. Research only buildings not there, with one helper agent and an exact field list (gym, guest access, entrance, year, floors, beach). Add the result to `db/buildings.json` with its date and source.
-6. **Checks:** `status.py`, plus JavaScript assertions in the browser pane (counts, no sideways scroll), plus one screenshot. No screenshot loops.
+5. **Buildings and places:** reuse `db/buildings.json` and `db/places.json`. For a building not there, `fetch_buildings.py` (inside `lite.py`) reads the listing site's building page and prints at most 6 lines on amenities, gym, entrance, floors, year and beach; write the building's facts from those lines, with a Confirm on anything the marketing text can't back. Only a building with no page (like 951 Jefferson) gets a short look by hand. Add it to `db/buildings.json` with its date and source.
+6. **Checks:** `check_page.py` (inside `lite.py`, offline: homes, prices, photos, building facts, OneHome shares, long walks, the client's `bannedWords`), `status.py`, then one look in the browser pane at Mobile width (no sideways scroll) and one screenshot. No screenshot loops.
+6a. **New client:** `new_client.py` writes client.json and data/listings.json from the MLS numbers, Andrew's groups and places in `db/places.json` (buildings matched to `db/buildings.json` by street address; OpenStreetMap layers copied from a client on the same base map). It refuses to overwrite. Then write the lede wording, notes and `bannedWords` (the places or words the client said no to).
 7. **Per-building OneHome shares** (only when asked): speed-bar the building's MLS numbers, tick each row's checkbox (the "All" link and header box don't always register), Share Link, name "<Client> <building>", Generate Link, read the URL from the dialog's input with JavaScript, Cancel. Open each link once to confirm the count. If a click freezes the tab (a native dialog), open a new tab and continue.
 
 Network runs only in the main session (the harness denies helper agents). Every script prints at most one line per home.

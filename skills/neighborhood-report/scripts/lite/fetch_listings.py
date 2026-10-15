@@ -50,6 +50,9 @@ def parse(html, url, date):
             rec["beds"] = d.get("numberOfBedrooms")
             rec["baths"] = d.get("numberOfBathroomsTotal")
             rec["sqft"] = (d.get("floorSize") or {}).get("value")
+            if isinstance(rec["sqft"], (int, float)) and rec["sqft"] > 20000:  # a building total, not the unit
+                rec["sqftNote"] = "page shows %s sq ft, a building total; dropped" % rec["sqft"]
+                rec["sqft"] = None
             g = d.get("geo") or {}
             if g.get("latitude"):
                 rec["lat"], rec["lon"] = g["latitude"], g["longitude"]
@@ -60,6 +63,9 @@ def parse(html, url, date):
             m2 = re.search(r" in (.+)$", d.get("name", ""))
             if m2:
                 rec["building"] = m2.group(1)
+    bp = re.search(r'href="(https://www\.bexrealty\.com/real-estate/[^"/]+/[^"/]+/)Rentals/"', html)
+    if bp:
+        rec["buildingPage"] = bp.group(1)  # the building's own page, for fetch_buildings.py
     L = lines_of(html)
     # fallbacks when a page has no listing JSON-LD: the "Overview of ..." block and the og:image tag
     if rec.get("beds") is None:

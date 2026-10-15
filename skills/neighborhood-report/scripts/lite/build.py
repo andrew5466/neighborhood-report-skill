@@ -106,7 +106,7 @@ def main_anchors(root, cfg):
         })
         # optional fields, only when the client uses them (older pages rebuild unchanged): "building" for one pin per
         # building, and each field a filter group filters on
-        for k in ["building"] + [g["field"] for g in cfg.get("filterGroups", [])]:
+        for k in ["building", "onehome"] + [g["field"] for g in cfg.get("filterGroups", [])]:
             if k in L:
                 homes[-1][k] = L[k]
         if measures[L["id"]].get("point"):
@@ -128,6 +128,8 @@ def main_anchors(root, cfg):
         data["showLongWalks"] = True
     if cfg.get("noMover"):
         data["noMover"] = True
+    if cfg.get("mapButton"):
+        data["mapButton"] = True  # Kevin pattern: a card opens without moving the map; "Show on map" draws its routes
     if cfg.get("maxWalkMin"):
         data["maxWalkMin"] = int(cfg["maxWalkMin"])
     if cfg.get("notes"):

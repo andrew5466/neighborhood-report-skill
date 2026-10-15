@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Map Lite: download each home's first listing photo (network; main session, Andrew's OK for photo use).
 
-    python3 -I fetch_photos.py "<client folder>"
+    python3 -I fetch_photos.py "<client folder>" [--refresh]
 
 Reads <client>/data/photo-sources.json:
   {listing id: {"url": "<direct image URL>", "page": "<listing page>", "site": "Bex Realty", "kind": "unit" | "building"}}
 Downloads each image, shrinks it to 900 px wide JPEG with macOS `sips` (originals stay in a temp folder), and
 writes <client>/data/photos/<id>.jpg plus data/photos.json, which build.py embeds. A building photo is labelled
-as one on the page.
+as one on the page. A photo already downloaded from the same URL is kept (no download); --refresh fetches all again.
 """
 import json
 import subprocess
@@ -19,13 +19,18 @@ from pathlib import Path
 UA = "AMG-map-lite/1.0 (andrew2000garcia@gmail.com)"
 
 
-def main(root):
+def main(root, refresh=False):
     src = json.loads((root / "data/photo-sources.json").read_text())
     out_dir = root / "data/photos"
     out_dir.mkdir(parents=True, exist_ok=True)
-    meta = {}
+    old = json.loads((root / "data/photos.json").read_text()) if (root / "data/photos.json").exists() else {}
+    meta, kept = {}, 0
     with tempfile.TemporaryDirectory() as tmp:
         for pid, s in src.items():
+            if not refresh and old.get(pid, {}).get("url") == s["url"] and (out_dir / (pid + ".jpg")).exists():
+                meta[pid] = old[pid]
+                kept += 1
+                continue
             raw = Path(tmp) / (pid + ".orig")
             try:
                 req = urllib.request.Request(s["url"], headers={"User-Agent": UA})
@@ -41,7 +46,8 @@ def main(root):
             meta[pid] = {"file": "photos/%s.jpg" % pid, "credit": "%s · %s" % (label, s["site"]), "page": s["page"], "url": s["url"]}
             print("%-20s %6d bytes  %s" % (pid, dst.stat().st_size, label))
     (root / "data/photos.json").write_text(json.dumps(meta, indent=1), encoding="utf-8")
+    print("photos: %d kept, %d downloaded" % (kept, len(meta) - kept))
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]).resolve())
+    main(Path(sys.argv[1]).resolve(), "--refresh" in sys.argv)

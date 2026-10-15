@@ -31,8 +31,8 @@ def norm(row, seen):
     lease = "seasonal" if style in SEASONAL else "off-season" if re.fullmatch(r"R8[0-5]", style) else "annual" if style.startswith("R") else "unknown"
     return {"mls": row["ML #"], "status": STATUS.get(row.get("St", ""), row.get("St")), "address": row.get("Address"),
             "listPrice": money(row.get("LP$")), "per": (row.get("PER") or "").lower() or None, "furnished": row.get("F$"),
-            "beds": row.get("#Beds"), "fullBaths": row.get("#FB"), "halfBaths": row.get("#HB"), "sqft": money(row.get("SqFt LA")),
-            "style": style, "leaseKind": lease, "yearBuilt": row.get("YR"), "subdivision": row.get("SN"),
+            "beds": row.get("#Beds"), "fullBaths": row.get("#FB"), "halfBaths": row.get("#HB"), "sqft": money(row.get("SqFt LA")) if (money(row.get("SqFt LA")) or 0) <= 20000 else None,
+            "style": style, "leaseKind": lease, "sqftNote": "Matrix SqFt %s is a building total, not the unit; dropped" % row.get("SqFt LA") if (money(row.get("SqFt LA")) or 0) > 20000 else None, "yearBuilt": row.get("YR"), "subdivision": row.get("SN"),
             "soldPrice": money(row.get("SP$")), "seen": seen, "source": "Miami Realtors Matrix results grid"}
 
 

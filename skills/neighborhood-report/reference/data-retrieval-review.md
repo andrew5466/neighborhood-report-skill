@@ -78,3 +78,43 @@ What stays manual: Andrew's choices (which homes, which places, the groups), wor
 ## What changed in the kit (2026-10-15)
 
 `scripts/fetchcache.py`, `scripts/fetch_listings.py`, `scripts/matrix_grid.js`, `scripts/ingest_matrix.py`, `scripts/draft_cards.py`, `scripts/status.py`, `scripts/lite.py`; `fetch_routes.py` now cached; `db/places.json` (Mila, Catch, Carbone, the Delano, Lincoln Road, the beach) and `db/buildings.json` (7 buildings) seeded.
+
+## Pass 2 (2026-10-15, later): what's left after the fast path
+
+The process was saved as an SOP first (SOP — Client Neighborhood Map (Map Lite)), then run through the algorithm again. After pass 1, the remaining costs on Crash Pad Sobe were these (estimates, from this session):
+
+| Remaining cost | Tokens | Time |
+|---|---|---|
+| Research agent for new buildings | 40-80k | 5-10 min |
+| Per-building OneHome shares (7 buildings) | 15-25k | ~10 min |
+| client.json written by hand | ~3k | 3-5 min |
+| Page checks in the browser (JS assertions + screenshot) | ~3k | 1-2 min |
+| Matrix grid | ~2.5k | 1 min |
+| Card exceptions edited by hand | 3-5k | 2-4 min |
+
+**1. Question.** Does a new building need research? Mostly no: the listing site already has a page for most buildings, linked from each unit page. Does the client file need writing by hand? Only the wording; everything else follows from the MLS numbers, the groups and the places.
+
+**2. Delete.** The research agent for building facts goes when the listing site has a building page. Hand-typing listings.json and the client file both go.
+
+**3. Speed up.** Photos are now kept when the URL hasn't changed (15 kept, 0 downloaded on a rerun). The page check moved from the browser to a script, so the browser is used for one look only.
+
+**4. Simplify.** `lite.py` now also merges card drafts on a first run (no data/cards.json yet), fetches building facts and checks the page, so a new client takes one command after the starter.
+
+**5. Automate.** The new scripts, all measured on Crash Pad Sobe:
+
+| Script | Replaces | Measured |
+|---|---|---|
+| `fetch_buildings.py` | the building research agent (40-80k tokens) | 2.8 s first fetch, about 1.5k tokens of printed lines; 6 of 7 buildings found. 951 Jefferson has no building page, so a small building like it still needs a short look |
+| `new_client.py` | client.json + listings.json by hand | 0.04 s. From the 17 MLS numbers, the 5 groups and 4 places it rebuilt the same 7 buildings (Carillon towers matched by street address), the same filters and the same lede as the hand-built file. Only the unit ids differ in style (`carillon-south-1106` vs `carillon-1106`) |
+| `check_page.py` | browser JS assertions | 0.05 s, offline: homes on the page, prices, photos, building facts, OneHome links are shares, walks over 20 minutes, the client's banned words (`bannedWords` in client.json) |
+| `fetch_photos.py` (reuse) | 15 downloads on every run | 0 downloads on a rerun |
+
+**Result.** A rerun of Crash Pad Sobe now takes **0.8 s** (was 2.7 s). A new client, from scratch, ran: starter 0.04 s, then `lite.py` in about 45 s (routes are the only real wait: 42 s for 28 new walks, then cached). Its page passed `check_page.py` with nothing written by hand except the title and groups.
+
+The new path for a client is: Andrew's MLS numbers, groups and places → `new_client.py` → Matrix grid (2 calls) → `lite.py` → edit the lede, notes and card exceptions → one look in the browser → publish.
+
+**Still manual, on purpose:** Andrew's choices and wording, the Matrix grid (his signed-in browser), card exceptions that change the brief (e.g. Presidential #903's "Short term rentals and subleases are strictly prohibited"), and the one look at the page.
+
+**Next candidates (not built):**
+- Per-building OneHome shares from one results page: search all MLS numbers once and tick each building's rows in turn, instead of one search per building. Expected to save about half of the 10 minutes. It needs a careful Matrix test, because unticking has to register too.
+- Building coordinates in `db/buildings.json`, so a new client's routes come from the cache when the building is already known (today they're keyed to the listing page's coordinates, so a new client re-fetches them).
