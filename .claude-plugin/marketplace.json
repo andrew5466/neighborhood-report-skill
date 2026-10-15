@@ -1,0 +1,21 @@
+{
+  "name": "amg-real-estate-skills",
+  "owner": {
+    "name": "Andrew Garcia"
+  },
+  "metadata": {
+    "description": "AMG Group real-estate skills for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "neighborhood-report",
+      "description": "Interactive one-page neighborhood reports for rental and buyer clients: Lite maps (priority layers, walk and bike routes, photos, compare, Interested / Pass) and the full bubble report",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/neighborhood-report"
+      ]
+    }
+  ]
+}

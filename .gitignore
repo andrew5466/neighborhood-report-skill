@@ -1,0 +1,19 @@
+# Client data never goes in this repo: it lives in the vault.
+clients/
+data/
+out/
+photos/
+*.osm.json
+client.json
+!skills/neighborhood-report/assets/client.example.json
+*Map.md
+*Listing Agent Texts*
+*Run Review*
+
+# Local noise
+.DS_Store
+__pycache__/
+*.pyc
+*.bak-*
+.env
+.env.*

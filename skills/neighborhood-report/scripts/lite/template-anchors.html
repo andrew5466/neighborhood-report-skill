@@ -1,0 +1,556 @@
+<title>{{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/*__LEAFLET_CSS__*/
+/* Anchors layout: map first with the client's fixed places, homes sorted by time to the first one; side by side from 900px. */
+:root {
+  --bg: #f3f7f6; --surface: #ffffff; --ink: #10292b; --muted: #50676a; --line: #d3dfdf;
+  --water: #a8d6db; --land: #edf0ea; --road: #ffffff; --road-edge: #c9d3d1; --park: #cfe5c3; --sand: #efd89c;
+  --walk: #d9472b; --walk-casing: #ffffff; --bike: #5146c8; --pizza: #b46a0c; --label: #4a5d5f;
+  --green: #1d7f55; --red: #b3302a; --red-bg: #fbe9e7; --gold: #8a5d00; --gold-bg: #fbf1d6; --pick: #d9472b;
+  --f-display: "Josefin Sans", "Futura", "Avenir Next", "Century Gothic", sans-serif;
+  --f-body: "Source Sans 3", "Source Sans Pro", -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e191b; --surface: #152427; --ink: #e4eded; --muted: #9ab0b2; --line: #284043;
+  --water: #163a4a; --land: #1b292b; --road: #3a4c4e; --road-edge: #273739; --park: #1f3f2c; --sand: #6c5a2c;
+  --walk: #ff7556; --walk-casing: #0e191b; --bike: #a199ff; --pizza: #e7a54a; --label: #a9bcbd;
+  --green: #4fc28f; --red: #ff8578; --red-bg: #3a1d1b; --gold: #e9bd52; --gold-bg: #332811; --pick: #ff7556; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e191b; --surface: #152427; --ink: #e4eded; --muted: #9ab0b2; --line: #284043;
+  --water: #163a4a; --land: #1b292b; --road: #3a4c4e; --road-edge: #273739; --park: #1f3f2c; --sand: #6c5a2c;
+  --walk: #ff7556; --walk-casing: #0e191b; --bike: #a199ff; --pizza: #e7a54a; --label: #a9bcbd;
+  --green: #4fc28f; --red: #ff8578; --red-bg: #3a1d1b; --gold: #e9bd52; --gold-bg: #332811; --pick: #ff7556; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); margin: 0 }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: 16px; padding-block: 18px 40px }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(1.9rem, 6vw, 2.8rem); letter-spacing: .02em; line-height: 1.05; text-transform: uppercase }
+.lede { margin: .5rem 0 .25rem; max-width: 62ch; font-size: 1.05rem }
+.byline { color: var(--muted); font-size: .85rem; margin: 0 }
+header { display: grid; gap: .25rem; margin-bottom: 14px }
+
+.grid { display: grid; gap: 16px }
+@media (min-width: 900px) {
+  .grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start }
+  .mapcol { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px) }
+  #map { height: calc(100vh - 150px) !important; min-height: 520px }
+}
+.mapcol { display: grid; gap: 8px; min-width: 0 }
+#map { height: 58vh; min-height: 340px; border-radius: 14px; border: 1px solid var(--line); overflow: hidden }
+.leaflet-container { background: var(--land); font-family: var(--f-body) }
+.leaflet-control-attribution { background: color-mix(in srgb, var(--surface) 85%, transparent) !important; color: var(--muted) !important; font-size: 11px }
+.leaflet-control-attribution a { color: var(--muted) }
+.leaflet-bar a { background: var(--surface); color: var(--ink); border-color: var(--line) }
+.leaflet-bar a:hover { background: var(--bg) }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.chip { font: 600 .85rem var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  min-height: 40px; padding: 0 14px 0 10px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer }
+.chip[aria-pressed="false"] { opacity: .5 }
+.chip:focus-visible, .head:focus-visible, summary:focus-visible, .btn:focus-visible { outline: 3px solid var(--walk); outline-offset: 2px }
+.sw { width: 22px; height: 0; border-top: 4px solid var(--walk); border-radius: 2px }
+.sw.bike { border-top: 3px dashed var(--bike) }
+.sw.beach { height: 12px; border: 0; background: var(--sand); border-radius: 3px }
+.sw.pz { width: 18px; height: 18px; border: 0; border-radius: 5px; background: var(--pizza) }
+.chip.fit { padding: 0 14px; margin-left: auto }
+.note { color: var(--muted); font-size: .8rem; margin: 0 }
+
+.pin { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font: 700 15px var(--f-mono);
+  color: #fff; border: 2.5px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.35); cursor: pointer; transition: transform .15s }
+.pin.st-confirm { background: var(--gold) } .pin.st-miss { background: var(--red) }
+:root .pin.st-confirm, :root .pin.st-miss { color: var(--surface) }
+.pin.on { transform: scale(1.22); border-color: var(--ink) }
+.pzpin { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; background: var(--pizza); color: var(--surface);
+  font: 700 12px var(--f-mono); border: 2px solid var(--surface) }
+.lbl { position: absolute; white-space: nowrap; font: 600 10.5px var(--f-body); color: var(--label); pointer-events: none;
+  text-shadow: 0 0 3px var(--land), 0 0 3px var(--land), 0 0 2px var(--land) }
+.wlbl { position: absolute; white-space: nowrap; text-align: center; line-height: 1.25; font: 600 italic 13px var(--f-body); letter-spacing: .12em; color: color-mix(in srgb, var(--ink) 45%, var(--water));
+  transform: translate(-50%, -50%); pointer-events: none; text-transform: uppercase }
+.leaflet-tooltip.dist { background: var(--surface); color: var(--ink); border: 1px solid var(--line); font: 600 12px var(--f-body); box-shadow: 0 1px 3px rgba(0,0,0,.25) }
+.leaflet-tooltip.dist::before { display: none }
+
+.homes { display: grid; gap: 12px; min-width: 0 }
+.homes > h2 { font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted) }
+.home { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; scroll-margin-top: 12px }
+.home.on { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) }
+.head { all: unset; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center;
+  width: 100%; min-height: 60px; padding: 12px 14px; cursor: pointer }
+.chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin: 0 4px 4px }
+.head[aria-expanded="true"] .chev { transform: rotate(-135deg); margin: 4px 4px 0 }
+.body > .addr { padding: 0 14px 8px }
+.num { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 700 15px var(--f-mono); color: var(--surface) }
+.st-confirm .num { background: var(--gold) } .st-miss .num { background: var(--red) }
+.head h3 { font-size: 1.12rem; letter-spacing: .01em; line-height: 1.2 }
+.unit { font-family: var(--f-mono); font-size: .85em; color: var(--muted); letter-spacing: 0 }
+.addr { margin: 0; color: var(--muted); font-size: .85rem }
+.rent { text-align: right; font: 600 1.05rem var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap }
+.rent small { font-size: .7em; color: var(--muted) }
+.prio { margin: 0; padding: 0 14px; display: grid }
+.prio > div { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line) }
+.prio dt { align-self: start; font: 700 .72rem var(--f-display); letter-spacing: .12em; text-transform: uppercase; padding-top: 4px; display: flex; gap: 6px; align-items: center }
+.prio dt i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none }
+.dt-beach i { background: var(--sand) } .dt-bike i { background: var(--walk) } .dt-priv i { background: var(--ink) }
+.prio dd { margin: 0; min-width: 0 }
+.big { font: 600 1.05rem var(--f-mono); font-variant-numeric: tabular-nums }
+.sub { display: block; color: var(--muted); font-size: .86rem }
+.prio ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: .92rem }
+.c { display: inline-block; font: 700 .68rem var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--gold); background: var(--gold-bg);
+  border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px }
+.flags { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; margin: 0; list-style: none; border-top: 1px solid var(--line) }
+.flags li { font-size: .8rem; font-weight: 600; border-radius: 6px; padding: 3px 8px }
+.flags .red { color: var(--red); background: var(--red-bg) } .flags .gold { color: var(--gold); background: var(--gold-bg) }
+details { border-top: 1px solid var(--line) }
+summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: .9rem; color: var(--muted); min-height: 44px; display: flex; align-items: center }
+.more { padding: 0 14px 14px; display: grid; gap: 10px; font-size: .9rem }
+.more dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px }
+.more dt { color: var(--muted) } .more dd { margin: 0 }
+.pc { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) }
+.pc h4 { margin: 0 0 2px; font: 700 .72rem var(--f-display); letter-spacing: .12em; text-transform: uppercase }
+.pc ul { margin: 0; padding-left: 18px }
+
+.onehome { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px }
+.onehome h2 { font-size: 1rem; letter-spacing: .1em; text-transform: uppercase }
+.btns { display: flex; flex-wrap: wrap; gap: 8px }
+.btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 10px; background: var(--ink); color: var(--bg);
+  font-weight: 700; text-decoration: none }
+footer { margin-top: 26px; display: grid; gap: 12px; color: var(--muted); font-size: .85rem; max-width: 75ch }
+footer h2 { font-size: .85rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink) }
+footer p { margin: 0 }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between }
+.tools { display: flex; flex-wrap: wrap; gap: 8px }
+.toolbar .note { flex-basis: 100% }
+.toolbar .note:empty { display: none }
+.copyout { width: 100%; font: .85rem var(--f-body); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; background: var(--surface) }
+.seg button { all: unset; cursor: pointer; padding: 0 16px; min-height: 42px; display: inline-flex; align-items: center; font: 600 .88rem var(--f-body); color: var(--muted) }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg) }
+.act { font: 600 .88rem var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; min-height: 42px; padding: 0 14px; cursor: pointer }
+.act:disabled { opacity: .45; cursor: default }
+.seg button:focus-visible, .act:focus-visible, .rider:focus-visible { outline: 3px solid var(--walk); outline-offset: 2px }
+.choice { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--line); align-items: center }
+.choice .yes[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: var(--surface) }
+.choice .no[aria-pressed="true"] { background: var(--muted); border-color: var(--muted); color: var(--surface) }
+.choice .cmpbtn { margin-left: auto }
+.choice .cmpbtn[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink) }
+.choice .hint { flex-basis: 100%; margin: 0; font-size: .82rem; color: var(--muted) }
+.mine { font: 700 .66rem var(--f-body); letter-spacing: .06em; text-transform: uppercase; border-radius: 4px; padding: 2px 6px; vertical-align: 2px; white-space: nowrap }
+.mine.yes { background: var(--green); color: var(--surface) }
+.mine.no { background: var(--line); color: var(--muted) }
+.home.pass .head h3, .home.pass .head .rent { opacity: .55 }
+.photo { margin: 0 14px 10px }
+.photo .frame { aspect-ratio: 16 / 10; max-width: 100%; border-radius: 10px; overflow: hidden; background: var(--line) }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block }
+.photo figcaption { font-size: .72rem; color: var(--muted); padding-top: 4px }
+.rider { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--surface); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.35); cursor: pointer }
+.cmp { background: var(--surface); border: 1px solid var(--ink); border-radius: 14px; padding: 12px; display: grid; gap: 8px; min-width: 0 }
+.cmp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap }
+.cmp-head h2 { font-size: 1rem; letter-spacing: .1em; text-transform: uppercase }
+.cmp-scroll { overflow-x: auto; min-width: 0 }
+.cmp table { border-collapse: collapse; font-size: .86rem; min-width: 100%; font-variant-numeric: tabular-nums }
+.cmp th, .cmp td { text-align: left; vertical-align: top; padding: 7px 8px; border-top: 1px solid var(--line); min-width: 120px }
+.cmp thead th { border-top: 0; font-family: var(--f-display); font-size: .95rem; line-height: 1.2 }
+.cmp thead img { display: block; width: 100%; max-width: 180px; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 6px; margin-top: 6px }
+.cmp tbody th { color: var(--muted); font-weight: 600; min-width: 96px }
+.cmp .num { display: inline-grid; width: 24px; height: 24px; font-size: 12px; vertical-align: 1px }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0) }
+@media (prefers-reduced-motion: reduce) { .pin { transition: none } }
+
+/* anchors mode */
+#filter { flex-basis: 100%; width: max-content }
+[hidden] { display: none !important }
+:root { --a0: #c2410c; --a1: #4338ca; --a2: #0f766e; --fit: #1d7f55 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --fit: #4fc28f } }
+:root[data-theme="dark"] { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --fit: #4fc28f }
+.pin.st-fit, .st-fit .num { background: var(--fit) }
+:root .pin.st-fit { color: var(--surface) }
+.apin { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; font: 700 11px var(--f-mono); color: var(--surface); flex: none }
+.apin.big { width: 30px; height: 30px; border-radius: 8px; font-size: 14px; border: 2px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.35) }
+.apin.a0, .dt-a0 i { background: var(--a0) } .apin.a1, .dt-a1 i { background: var(--a1) } .apin.a2, .dt-a2 i { background: var(--a2) }
+.dt-p i { background: var(--muted) }
+.sw.park { height: 12px; border: 0; background: var(--park); border-radius: 3px }
+.prio > div { grid-template-columns: 92px minmax(0, 1fr) }
+.prio dt { white-space: nowrap }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">{{LEDE}}</p>
+    <p class="byline">{{BYLINE}}</p>
+  </header>
+
+  <div class="grid">
+    <section class="mapcol" aria-label="Map">
+      <div id="map" role="region" aria-label="Map with the homes and the places that matter to you"></div>
+      <div class="chips" role="group" aria-label="Map layers" id="chips"></div>
+      <p class="note" id="map-note"></p>
+    </section>
+
+    <section class="homes" aria-label="Homes">
+      <div class="toolbar">
+        <div class="seg" id="filter" role="group" aria-label="Show homes or apartments" hidden></div>
+        <div class="seg" id="sort" role="group" aria-label="Sort homes"></div>
+        <div class="tools">
+          <button class="act" id="cmp-open" disabled>Compare (0)</button>
+          <button class="act" id="copy" disabled>Copy my picks</button>
+        </div>
+        <p class="note" id="copy-msg" aria-live="polite"></p>
+        <textarea id="copy-out" class="copyout" rows="4" hidden aria-label="Your picks"></textarea>
+      </div>
+      <section class="cmp" id="cmp" hidden aria-label="Compare homes">
+        <div class="cmp-head"><h2>Compare</h2><span><button class="act" id="cmp-clear">Clear</button> <button class="act" id="cmp-close">Close</button></span></div>
+        <div class="cmp-scroll" id="cmp-table"></div>
+      </section>
+      <h2 id="sort-title"></h2>
+      <div id="list" class="homes"></div>
+      <div class="onehome">
+        <h2>See the listings</h2>
+        <div class="btns" id="onehome"></div>
+        <p class="note">Photos, floor plans and full listing details are on OneHome.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <h2>Sources</h2>
+    <p>{{SOURCES}}</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function () {
+  const D = /*__DATA__*/null;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const tok = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const decode = (a, sc) => { const p = []; let x = a[0], y = a[1]; p.push([x / sc, y / sc]);
+    for (let i = 2; i < a.length; i += 2) { x += a[i]; y += a[i + 1]; p.push([x / sc, y / sc]); } return p; };
+  const VERB = { car: "drive", bike: "ride", foot: "walk" };
+  const A = D.anchors, A0 = A[0];
+  const rmin = (h, k) => h.r && h.r[k] ? h.r[k].min : null;
+  const timeText = (h, a) => rmin(h, a.key) != null ? `${rmin(h, a.key)} min ${VERB[a.profile] || "trip"}` : `${h.to[a.key].toFixed(1)} mi`;
+
+  // ---------- list ----------
+  const SORTS = { rent: (a, b) => a.rent - b.rent || a.n - b.n };
+  const SORT_TITLE = { rent: "Lowest rent first" };
+  A.forEach((a) => {
+    SORTS[a.key] = (x, y) => (rmin(x, a.key) ?? 0) - (rmin(y, a.key) ?? 0) || x.to[a.key] - y.to[a.key] || x.n - y.n;
+    SORT_TITLE[a.key] = "Closest to " + a.label + " first";
+  });
+  const order = A.map((a) => a.key).concat("rent");
+  $("#sort").innerHTML = order.map((k, i) => `<button data-sort="${k}" aria-pressed="${i === 0}">${esc(k === "rent" ? "Rent" : A.find((a) => a.key === k).sortLabel)}</button>`).join("");
+
+  const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
+                  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  const PK = "picks:" + D.slug;
+  const picks = store.get(PK) || {};
+  let compare = [];
+  let mapApi = null;
+  const tag = (c) => c ? '<span class="c">Confirm</span>' : "";
+  const list = $("#list");
+  list.innerHTML = D.homes.map((h) => {
+    const anchorRows = A.map((a, i) => {
+      const r = h.r && h.r[a.key];
+      const big = r ? `<span class="big">${r.min} min</span> ${VERB[a.profile] || "trip"} to ${esc(a.label)}` : `<span class="big">${h.to[a.key].toFixed(1)} mi</span> to ${esc(a.label)}`;
+      const sub = (r ? `${r.mi.toFixed(1)} mi by route; ` : "") + `${h.to[a.key].toFixed(1)} mi straight-line.`;
+      return `<div><dt class="dt-a${i}"><i></i>${esc(a.short)}</dt><dd>${big}<span class="sub">${sub}</span></dd></div>`;
+    }).join("");
+    const prioRows = h.prio.map((p) => `<div><dt class="dt-p"><i></i>${esc(p.k)}</dt><dd>${esc(p.t)}${tag(p.c)}</dd></div>`).join("");
+    return `<article class="home st-${h.status}" id="h-${h.id}">
+      <button class="head" data-id="${h.id}" aria-expanded="false" aria-controls="b-${h.id}">
+        <span class="num">${h.n}</span>
+        <h3>${esc(h.name)}${h.unit ? ` <span class="unit">#${esc(h.unit)}</span>` : ""} <span class="mine" hidden></span></h3>
+        <span class="rent">${esc(h.rentText.replace("/mo", ""))}<small>/mo</small></span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="body" id="b-${h.id}" hidden>
+      <p class="addr">${esc(h.addr)}${h.area ? " · " + esc(h.area) : ""}${h.kindLabel ? " · " + esc(h.kindLabel) : ""}</p>
+      ${h.photo ? `<figure class="photo"><div class="frame"><img src="${h.photo.src}" alt="Listing photo of ${esc(h.name)}${h.unit ? " #" + esc(h.unit) : ""}" loading="lazy"></div><figcaption>${esc(h.photo.credit)}</figcaption></figure>` : ""}
+      <dl class="prio">${anchorRows}${prioRows}</dl>
+      ${h.flags.length ? `<ul class="flags">${h.flags.map((f) => `<li class="${f.l}">${esc(f.t)}</li>`).join("")}</ul>` : ""}
+      <div class="choice" data-id="${h.id}">
+        <button class="act yes" data-pick="yes" aria-pressed="false">Interested</button>
+        <button class="act no" data-pick="no" aria-pressed="false">Pass</button>
+        <button class="act cmpbtn" data-cmp="${h.id}" aria-pressed="false">Compare</button>
+        <p class="hint" hidden></p>
+      </div>
+      <div class="more">
+        <dl><dt>Rent</dt><dd>${esc(h.rentText)}. ${esc(h.rentSub)}${tag(h.rentConfirm)}</dd>
+        ${h.details.map((d) => `<dt>${esc(d.k)}</dt><dd>${esc(d.v)}${tag(d.c)}</dd>`).join("")}</dl>
+        <div class="pc"><div><h4>Pros</h4><ul>${h.pros.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
+        <div><h4>Cons</h4><ul>${h.cons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div></div>
+      </div></div>
+    </article>`;
+  }).join("");
+  $("#onehome").innerHTML = D.onehome.map((o) => `<a class="btn" href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.label)}</a>`).join("");
+
+  function sortBy(key) {
+    D.homes.slice().sort(SORTS[key]).forEach((h) => list.appendChild(document.getElementById("h-" + h.id)));
+    $("#sort-title").textContent = SORT_TITLE[key];
+    document.querySelectorAll("#sort button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.sort === key));
+    store.set("sort:" + D.slug, key);
+  }
+  $("#sort").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) sortBy(b.dataset.sort); });
+  sortBy(SORTS[store.get("sort:" + D.slug)] ? store.get("sort:" + D.slug) : order[0]);
+
+  // filter: homes vs apartments (client.json "filters"; each listing has "kind")
+  let curFilter = "all";
+  function applyFilter(k) {
+    curFilter = k;
+    D.homes.forEach((h) => {
+      const show = k === "all" || h.kind === k;
+      document.getElementById("h-" + h.id).hidden = !show;
+      if (mapApi && mapApi.show) mapApi.show(h.id, show);
+    });
+    document.querySelectorAll("#filter button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === k));
+    store.set("filter:" + D.slug, k);
+  }
+  if (D.filters && D.filters.length) {
+    const count = (k) => k === "all" ? D.homes.length : D.homes.filter((h) => h.kind === k).length;
+    $("#filter").innerHTML = D.filters.map((f) => `<button data-f="${esc(f.key)}" aria-pressed="false">${esc(f.label)} (${count(f.key)})</button>`).join("");
+    $("#filter").hidden = false;
+    $("#filter").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) applyFilter(b.dataset.f); });
+    const saved = store.get("filter:" + D.slug);
+    applyFilter(D.filters.some((f) => f.key === saved) ? saved : "all");
+  }
+
+  function openCard(id) {
+    list.querySelectorAll(".head").forEach((b) => {
+      const open = b.dataset.id === id;
+      b.setAttribute("aria-expanded", open);
+      document.getElementById("b-" + b.dataset.id).hidden = !open;
+      document.getElementById("h-" + b.dataset.id).classList.toggle("on", open);
+    });
+  }
+
+  // Interested / Pass: kept on this device; a comment pinned to the button carries the note to Andrew
+  const comments = window.claude && window.claude.use ? window.claude.use("comments").catch(() => null) : Promise.resolve(null);
+  function paintPick(id) {
+    const v = picks[id], card = document.getElementById("h-" + id), chip = card.querySelector(".mine");
+    card.querySelectorAll("[data-pick]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.pick === v));
+    chip.hidden = !v; chip.textContent = v === "yes" ? "Interested" : v === "no" ? "Pass" : "";
+    chip.className = "mine " + (v || ""); card.classList.toggle("pass", v === "no");
+  }
+  D.homes.forEach((h) => paintPick(h.id));
+  async function choose(btn) {
+    const box = btn.closest(".choice"), id = box.dataset.id, hint = box.querySelector(".hint");
+    picks[id] = picks[id] === btn.dataset.pick ? undefined : btn.dataset.pick;
+    if (!picks[id]) delete picks[id];
+    store.set(PK, picks); paintPick(id); updateCopy();
+    if (!picks[id]) { hint.hidden = true; return; }
+    hint.hidden = false;
+    hint.textContent = "Saved on this device. Use Copy my picks to text them to Andrew.";
+    const cm = await comments;
+    if (!cm) return;
+    try {
+      const res = await cm.openComposer({ element: btn });
+      if (res.opened) hint.textContent = "Add a note for Andrew in the comment box that just opened. He sees it pinned to this home.";
+    } catch (e) { /* no comments in this view: the copy button still works */ }
+  }
+
+  // compare up to 3 homes side by side
+  function renderCompare() {
+    document.querySelectorAll(".cmpbtn").forEach((b) => b.setAttribute("aria-pressed", compare.includes(b.dataset.cmp)));
+    $("#cmp-open").textContent = "Compare (" + compare.length + ")";
+    $("#cmp-open").disabled = compare.length < 2;
+    const sec = $("#cmp");
+    if (compare.length < 2) { sec.hidden = true; return; }
+    const hs = compare.map((id) => D.homes.find((h) => h.id === id));
+    const prioKeys = [...new Set(D.homes.flatMap((h) => h.prio.map((p) => p.k)))];
+    const val = (list, k) => { const d = list.find((x) => x.k === k); return d ? esc(d.v ?? d.t) + tag(d.c) : "—"; };
+    const rows = [["Rent", (h) => esc(h.rentText)]]
+      .concat(A.map((a) => [esc(a.label), (h) => timeText(h, a)]))
+      .concat(prioKeys.map((k) => [esc(k), (h) => val(h.prio, k)]))
+      .concat([["Size", (h) => val(h.details, "Size")],
+               ["Misses", (h) => h.flags.filter((f) => f.l === "red").map((f) => esc(f.t)).join("<br>") || "None known"],
+               ["To confirm", (h) => String(h.flags.filter((f) => f.l === "gold").length)]]);
+    $("#cmp-table").innerHTML = `<table><thead><tr><th scope="col"><span class="sr">Compare</span></th>${hs.map((h) => `<th scope="col"><span class="num st-${h.status}">${h.n}</span> ${esc(h.name)}${h.unit ? " #" + esc(h.unit) : ""}${h.photo ? `<img src="${h.photo.src}" alt="">` : ""}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(([k, f]) => `<tr><th scope="row">${k}</th>${hs.map((h) => `<td>${f(h)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  }
+  $("#cmp-open").addEventListener("click", () => { $("#cmp").hidden = false; renderCompare(); $("#cmp").scrollIntoView({ block: "start", behavior: "smooth" }); });
+  $("#cmp-close").addEventListener("click", () => { $("#cmp").hidden = true; });
+  $("#cmp-clear").addEventListener("click", () => { compare = []; renderCompare(); });
+
+  // copy my picks: a plain-text summary to text Andrew
+  function picksText() {
+    const lines = [D.title + ": my picks"];
+    [["yes", "Interested"], ["no", "Pass"]].forEach(([v, label]) => {
+      const hs = D.homes.filter((h) => picks[h.id] === v);
+      if (hs.length) lines.push(label + ": " + hs.map((h) => `#${h.n} ${h.name}${h.unit ? " " + h.unit : ""} (${h.rentText})`).join("; "));
+    });
+    return lines.join("\n");
+  }
+  function updateCopy() { $("#copy").disabled = !Object.keys(picks).length; }
+  updateCopy();
+  $("#copy").addEventListener("click", async () => {
+    const text = picksText(), out = $("#copy-out");
+    try { await navigator.clipboard.writeText(text); out.hidden = true; $("#copy-msg").textContent = "Copied. Paste it in a text to Andrew."; }
+    catch (e) { out.hidden = false; out.value = text; out.focus(); out.select(); $("#copy-msg").textContent = "Select the text below and copy it."; }
+  });
+
+  list.addEventListener("click", (e) => {
+    const pk = e.target.closest("[data-pick]"); if (pk) { choose(pk); return; }
+    const cb = e.target.closest("[data-cmp]");
+    if (cb) {
+      const id = cb.dataset.cmp;
+      compare = compare.includes(id) ? compare.filter((x) => x !== id) : compare.concat(id).slice(-3);
+      renderCompare(); return;
+    }
+    const b = e.target.closest(".head"); if (!b) return;
+    if (b.getAttribute("aria-expanded") === "true") { b.setAttribute("aria-expanded", "false"); document.getElementById("b-" + b.dataset.id).hidden = true; document.getElementById("h-" + b.dataset.id).classList.remove("on"); return; }
+    openCard(b.dataset.id); if (mapApi) mapApi.select(b.dataset.id, "list");
+  });
+  renderCompare();
+
+  // chips and the map note
+  $("#chips").innerHTML = A.map((a, i) => a.pin === false ? "" : `<button class="chip" id="t-a${i}" aria-pressed="true"><span class="apin a${i}">${esc(a.letter)}</span>${esc(a.label)}</button>`).join("")
+    + '<button class="chip" id="t-parks" aria-pressed="true"><span class="sw park"></span>Parks</button><button class="chip fit" id="t-fit">Show all homes</button>';
+  const PLACES = [...new Set(A.map((a) => a.label))];
+  const MOVER = A0.profile === "foot" ? "a walker follows" : A0.profile === "bike" ? "a bike rides" : "a car drives";
+  $("#map-note").textContent = `Tap a home to see its routes to ${PLACES.join(" and ")}; ${MOVER} the ${VERB[A0.profile] || ""} route to ${A0.label} (tap it to go again). ${D.routeNote} Pin color: green fits the brief as listed, gold has items to confirm, red misses part of the brief.`;
+
+  if (!window.L) { $("#map").innerHTML = '<p class="note" style="padding:16px">The map could not load. The homes and distances below are complete.</p>'; return; }
+
+  // ---------- map ----------
+  const B = D.base, sc = B.scale, fr = B.frame;
+  const map = L.map("map", { preferCanvas: true, zoomSnap: 0.25, minZoom: 11.5, maxZoom: 18,
+    maxBounds: [[fr.s, fr.w], [fr.n, fr.e]], maxBoundsViscosity: 0.8 });
+  map.attributionControl.setPrefix(false);
+  map.attributionControl.addAttribution("© OpenStreetMap contributors");
+  ["base", "sel"].forEach((p, i) => { map.createPane(p).style.zIndex = 200 + i * 240; });
+  map.getPane("tooltipPane").style.zIndex = 590;
+  const styled = [];
+  const add = (layer, fn) => { styled.push([layer, fn]); return layer; };
+
+  const baseG = L.layerGroup().addTo(map);
+  const poly = (arr, fill) => add(L.polygon(arr.map((a) => decode(a, sc)), { pane: "base", stroke: false, fillOpacity: 1, interactive: false }), () => ({ fillColor: tok(fill) }));
+  baseG.addLayer(poly(B.sea, "--water"));
+  baseG.addLayer(poly(B.islands, "--land"));
+  if (B.water.length) baseG.addLayer(poly(B.water, "--water"));
+  const parkG = L.layerGroup(B.parks.length ? [poly(B.parks, "--park")] : []).addTo(map);
+  const widths = [5, 4, 3.2, 2.4, 1.5];
+  for (let ci = B.roads.length - 1; ci >= 0; ci--) {
+    const lines = B.roads[ci].map((a) => decode(a, sc));
+    baseG.addLayer(add(L.polyline(lines, { pane: "base", interactive: false, weight: widths[ci] + 1.5 }), () => ({ color: tok("--road-edge") })));
+    baseG.addLayer(add(L.polyline(lines, { pane: "base", interactive: false, weight: widths[ci] }), () => ({ color: tok("--road") })));
+  }
+  D.waterLabels.forEach(([n, at]) =>
+    L.marker(at, { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<span class="wlbl">${n}</span>` }) }).addTo(map));
+
+  const lblG = L.layerGroup().addTo(map);
+  function drawLabels() {
+    lblG.clearLayers();
+    const z = map.getZoom(), maxCi = z >= 16.5 ? 4 : z >= 16 ? 3 : z >= 15 ? 2 : z >= 13.5 ? 0 : -1;
+    if (maxCi < 0) return;
+    const vb = map.getBounds().pad(0.1);
+    B.labels.forEach(([la, lo, ang, ci, ni]) => {
+      if (ci > maxCi) return;
+      const p = [la / sc, lo / sc];
+      if (!vb.contains(p)) return;
+      const name = B.names[ni].replace(/\bAvenue\b/, "Ave").replace(/\bStreet\b/, "St").replace(/\bDrive\b/, "Dr").replace(/\bRoad\b/, "Rd").replace(/\bBoulevard\b/, "Blvd");
+      lblG.addLayer(L.marker(p, { interactive: false, keyboard: false, pane: "base",
+        icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<span class="lbl" style="transform:translate(-50%,-50%) rotate(${ang}deg)">${esc(name)}</span>` }) }));
+    });
+  }
+  map.on("zoomend moveend", drawLabels);
+
+  // the client's anchors
+  const anchorG = A.map((a, i) => a.pin === false ? L.layerGroup() : L.layerGroup([L.marker([a.lat, a.lon], { title: a.label, keyboard: false, zIndexOffset: 400,
+    icon: L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15], html: `<span class="apin big a${i}">${esc(a.letter)}</span>` }) })
+    .bindTooltip(esc(a.label), { className: "dist", direction: "top", offset: [0, -14] })]).addTo(map));
+
+  // homes: units in the same building sit side by side, 30 px apart
+  const byB = {};
+  D.homes.forEach((h) => { (byB[h.lat + "," + h.lon] = byB[h.lat + "," + h.lon] || []).push(h); });
+  const markers = {};
+  Object.values(byB).forEach((g) => g.sort((a, b) => a.n - b.n).forEach((h, i) => {
+    const dx = (i - (g.length - 1) / 2) * 30;
+    const icon = (on) => L.divIcon({ className: "", iconSize: [34, 34], iconAnchor: [17 - dx, 17],
+      html: `<span class="pin st-${h.status}${on ? " on" : ""}">${h.n}</span>` });
+    const mk = L.marker([h.lat, h.lon], { icon: icon(false), title: `#${h.n} ${h.name} ${h.unit}`, riseOnHover: true, zIndexOffset: 500 }).addTo(map);
+    mk.on("click", () => select(h.id, "map"));
+    markers[h.id] = { mk, icon };
+  }));
+
+  const allBounds = L.latLngBounds(D.homes.map((h) => [h.lat, h.lon]).concat(A.map((a) => [a.lat, a.lon]))).pad(0.06);
+  const fitAll = () => map.fitBounds(allBounds, { padding: [20, 20] });
+  fitAll();
+  drawLabels();
+
+  // selection: a route to each anchor, a car driving the first one
+  const selG = L.layerGroup().addTo(map);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  const carSvg = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16H3v-4l2-5h14l2 5v4h-2"/><path d="M3 12h18"/><circle cx="7.5" cy="16.5" r="2"/><circle cx="16.5" cy="16.5" r="2"/><path d="M9.5 16.5h5"/></g></svg>';
+  const walkSvg = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="m9 20 3-6 3 3v4M7 12l3-4 4 1 3 3M10 8l2 6"/></g></svg>';
+  let cur = null, anim = 0;
+  function drive(pts, rider) {
+    cancelAnimationFrame(anim);
+    if (pts.length < 2) return;
+    const seg = [0];
+    for (let i = 1; i < pts.length; i++) seg.push(seg[i - 1] + map.distance(pts[i - 1], pts[i]));
+    const total = seg[seg.length - 1], dur = Math.min(4500, Math.max(2000, total * (A0.profile === "foot" ? 4 : 0.6)));
+    if (reduce.matches || !total) { rider.setLatLng(pts[pts.length - 1]); return; }
+    const t0 = performance.now();
+    const step = (t) => {
+      const d = Math.min(1, (t - t0) / dur) * total;
+      let i = 1; while (i < seg.length - 1 && seg[i] < d) i++;
+      const f = (d - seg[i - 1]) / ((seg[i] - seg[i - 1]) || 1);
+      rider.setLatLng([pts[i - 1][0] + f * (pts[i][0] - pts[i - 1][0]), pts[i - 1][1] + f * (pts[i][1] - pts[i - 1][1])]);
+      if (d < total) anim = requestAnimationFrame(step);
+    };
+    anim = requestAnimationFrame(step);
+  }
+  const ROUTE_TOK = ["--a0", "--a1", "--a2"];
+  function select(id, from) {
+    const h = D.homes.find((x) => x.id === id);
+    if (cur) markers[cur].mk.setIcon(markers[cur].icon(false));
+    cur = id;
+    markers[id].mk.setIcon(markers[id].icon(true));
+    selG.clearLayers();
+    const p = [h.lat, h.lon];
+    let all = [p], first = null;
+    // the first anchor is drawn last, so its route sits on top where the routes overlap
+    A.map((a, i) => [a, i]).reverse().forEach(([a, i]) => {
+      const r = h.r && h.r[a.key];
+      const pts = r ? decode(r.p, sc) : [p, [a.lat, a.lon]];
+      if (i === 0) first = pts;
+      all = all.concat(pts);
+      const t = ROUTE_TOK[i] || "--ink";
+      selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 8, opacity: .9, interactive: false }), () => ({ color: tok("--walk-casing") })).setStyle({ color: tok("--walk-casing") }));
+      selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 4.5, interactive: false, dashArray: r ? null : "4 8" }), () => ({ color: tok(t) })).setStyle({ color: tok(t) }));
+      selG.addLayer(L.circleMarker([a.lat, a.lon], { pane: "sel", radius: 1, opacity: 0, fillOpacity: 0, interactive: false })
+        .bindTooltip(timeText(h, a) + " to " + esc(a.label), { permanent: true, className: "dist", direction: i ? "bottom" : "top", offset: i ? [0, 14] : [0, -16] }));
+    });
+    const rider = L.marker(p, { pane: "sel", interactive: true, keyboard: false, title: "Go again",
+      icon: L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15], html: '<span class="rider">' + (A0.profile === "foot" ? walkSvg : carSvg) + "</span>" }) });
+    rider.on("click", () => drive(first, rider));
+    selG.addLayer(rider);
+    // frame the first anchor's route (the client's lead priority); the other routes run off the edge and show on zoom-out
+    map.flyToBounds(L.latLngBounds(first).pad(0.5), { maxZoom: 17, duration: reduce.matches ? 0 : 0.6 });
+    map.once("moveend", () => drive(first, rider));
+    if (from === "map") { openCard(id); document.getElementById("h-" + id).scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  }
+  mapApi = { select, show: (id, on) => { const m = markers[id].mk; on ? m.addTo(map) : map.removeLayer(m); if (!on && cur === id) { cancelAnimationFrame(anim); selG.clearLayers(); cur = null; } } };
+  if (D.filters && D.filters.length) applyFilter(curFilter);
+
+  const toggle = (btn, g) => $(btn).addEventListener("click", (e) => {
+    const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+    e.currentTarget.setAttribute("aria-pressed", on);
+    on ? g.addTo(map) : map.removeLayer(g);
+  });
+  A.forEach((a, i) => { if (a.pin !== false) toggle("#t-a" + i, anchorG[i]); });
+  toggle("#t-parks", parkG);
+  $("#t-fit").addEventListener("click", () => { cancelAnimationFrame(anim); selG.clearLayers(); if (cur) markers[cur].mk.setIcon(markers[cur].icon(false)); cur = null; fitAll(); });
+
+  const restyle = () => styled.forEach(([l, fn]) => l.setStyle(fn()));
+  restyle();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", restyle);
+  new MutationObserver(restyle).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>

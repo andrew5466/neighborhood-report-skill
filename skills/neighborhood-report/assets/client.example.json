@@ -1,0 +1,29 @@
+{
+ "_about": "EXAMPLE Map Lite config (beach mode). Every value below is a placeholder: replace it per client. Real client folders live in the vault, never in this repo.",
+ "slug": "firstname-beach-map",
+ "title": "Firstname's Beach Map",
+ "lede": "{n} Miami Beach homes, sorted by distance to the sand. Each one shows how close the Beachwalk is for your bike and what the building's entrance and privacy look like.",
+ "byline": "Prepared by Andrew Garcia · AMG Group at PMG Residential · <Mon DD, YYYY> · MLS data as of <Mon YYYY>; please confirm with listing agents.",
+ "sources": "MLS and listing pages (<sites used>). Streets, beach, Beachwalk and bike lanes: © OpenStreetMap contributors, downloaded <date>. Straight-line distances are shorter than walking or riding routes.",
+ "basemap": "maps/miami-beach.json",
+ "bbox": [25.755, -80.165, 25.870, -80.105],
+ "places": {
+  "building-a": "<street address of building A>, Miami Beach, FL <zip>",
+  "building-b": "<street address of building B>, Miami Beach, FL <zip>",
+  "Pizza Place One": "<street address>, Miami Beach, FL <zip>",
+  "Pizza Place Two": "<street address>, Miami Beach, FL <zip>"
+ },
+ "homePlace": {
+  "building-a-101": "building-a",
+  "building-a-202": "building-a",
+  "building-b-303": "building-b"
+ },
+ "poi": {"label": "Pizza", "letter": "P", "names": ["Pizza Place One", "Pizza Place Two"]},
+ "path": {"label": "Beachwalk", "nameMatch": ["Boardwalk", "Beachwalk", "Sandwalk", "South Pointe Park Walk"]},
+ "beachMinLat": 25.763,
+ "waterLabels": [["Atlantic<br>Ocean", [25.80, -80.1065]], ["Biscayne Bay", [25.832, -80.156]]],
+ "onehome": [
+  {"label": "<Group name> on OneHome", "url": "https://portal.onehome.com/en-US/share/<share id>"}
+ ],
+ "exclude": []
+}
