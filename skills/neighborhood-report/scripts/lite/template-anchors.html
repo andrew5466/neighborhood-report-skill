@@ -194,6 +194,16 @@ footer p { margin: 0 }
 .far .bpin { padding: 3px; gap: 0 }
 .far .bpin .nm { display: none }
 #sort, .fgroups .seg { max-width: 100%; overflow-x: auto; min-width: 0; flex: 0 1 auto }
+.notes { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--ink); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; display: grid; gap: 6px; max-width: 75ch }
+.notes h2 { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase }
+.notes p { margin: 0; font-size: .95rem }
+.sec { display: grid; gap: 10px; min-width: 0 }
+.sec + .sec { margin-top: 10px }
+.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; padding-top: 6px; border-top: 2px solid var(--ink) }
+.sec-head h3 { font-size: 1.05rem; letter-spacing: .04em }
+.sec-head .note { flex-basis: 100%; margin: 0 }
+.sec-head .btn { min-height: 38px; font-size: .85rem }
+.sec-empty { margin: 0; color: var(--muted); font-size: .88rem }
 .toolbar, .fgroups, .grid > * { min-width: 0 }
 .bchoose { display: grid; gap: 6px; min-width: 190px }
 .bchoose b { font: 700 .95rem var(--f-display) }
@@ -215,6 +225,8 @@ footer p { margin: 0 }
     <p class="lede">{{LEDE}}</p>
     <p class="byline">{{BYLINE}}</p>
   </header>
+
+  <aside class="notes" id="notes" aria-label="Notes" hidden></aside>
 
   <nav class="areas" id="areas" aria-label="Areas" hidden></nav>
 
@@ -271,7 +283,10 @@ footer p { margin: 0 }
   const rmin = (h, k) => h.r && h.r[k] ? h.r[k].min : null;
   // client.json "showLongWalks": true shows every walk in full (1 h 45 min); otherwise a walk over 30 min reads "Over 30 min walk"
   const mins = (m) => D.showLongWalks && m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? " " + (m % 60) + " min" : ""}` : `${m} min`;
-  const timeText = (h, a) => rmin(h, a.key) != null ? (a.profile === "foot" && rmin(h, a.key) > 30 && !D.showLongWalks ? "Over 30 min walk" : `${mins(rmin(h, a.key))} ${VERB[a.profile] || "trip"}`) : `${h.to[a.key].toFixed(1)} mi`;
+  // a walk over client.json "maxWalkMin" minutes is shown as a distance in miles, not a walking time
+  const tooFar = (r, a) => r && a.profile === "foot" && D.maxWalkMin && r.min > D.maxWalkMin;
+  const timeText = (h, a) => { const r = h.r && h.r[a.key];
+    return tooFar(r, a) ? `${r.mi.toFixed(1)} mi` : rmin(h, a.key) != null ? (a.profile === "foot" && rmin(h, a.key) > 30 && !D.showLongWalks ? "Over 30 min walk" : `${mins(rmin(h, a.key))} ${VERB[a.profile] || "trip"}`) : `${h.to[a.key].toFixed(1)} mi`; };
 
   // ---------- list ----------
   const SORTS = { rent: (a, b) => a.rent - b.rent || a.n - b.n };
@@ -296,7 +311,7 @@ footer p { margin: 0 }
       const r = h.r && h.r[a.key];
       // a walk over 30 min is left off the card when the same place is also measured by car
       if (a.profile === "foot" && r && r.min > 30 && A.some((x) => x !== a && x.label === a.label && x.profile !== "foot")) return "";
-      const big = r ? `<span class="big">${mins(r.min)}</span> ${VERB[a.profile] || "trip"} to ${esc(a.label)}` : `<span class="big">${h.to[a.key].toFixed(1)} mi</span> to ${esc(a.label)}`;
+      const big = tooFar(r, a) ? `<span class="big">${r.mi.toFixed(1)} mi</span> to ${esc(a.label)}` : r ? `<span class="big">${mins(r.min)}</span> ${VERB[a.profile] || "trip"} to ${esc(a.label)}` : `<span class="big">${h.to[a.key].toFixed(1)} mi</span> to ${esc(a.label)}`;
       const sub = (r ? `${r.mi.toFixed(1)} mi by route; ` : "") + `${h.to[a.key].toFixed(1)} mi straight-line.`;
       return `<div><dt class="dt-a${i}"><i></i>${esc(a.short)}</dt><dd>${big}<span class="sub">${sub}</span></dd></div>`;
     }).join("");
@@ -329,9 +344,26 @@ footer p { margin: 0 }
     </article>`;
   }).join("");
   $("#onehome").innerHTML = D.onehome.map((o) => `<a class="btn" href="${esc(o.url)}" target="_blank" rel="noopener">${esc(o.label)}</a>`).join("");
+  if (D.notes && D.notes.length) {
+    $("#notes").innerHTML = "<h2>Notes</h2>" + D.notes.map((n) => `<p>${esc(n)}</p>`).join("");
+    $("#notes").hidden = false;
+  }
+  // sections (client.json "sections"): one block per group, each with its own heading, line and OneHome link
+  const SECS = D.sections || [];
+  const secBox = {};
+  if (SECS.length) {
+    const cards = {};
+    D.homes.forEach((h) => { cards[h.id] = document.getElementById("h-" + h.id); });
+    list.innerHTML = SECS.map((g) => `<section class="sec" id="sec-${esc(g.key)}" aria-label="${esc(g.title)}">
+      <div class="sec-head"><h3>${esc(g.title)}</h3>${g.onehome ? `<a class="btn" href="${esc(g.onehome.url)}" target="_blank" rel="noopener">${esc(g.onehome.label || "See on OneHome")}</a>` : ""}${g.sub ? `<p class="note">${esc(g.sub)}</p>` : ""}</div>
+      <div class="sec-list" id="secl-${esc(g.key)}"></div><p class="sec-empty" hidden>No homes here match the filter.</p></section>`).join("");
+    SECS.forEach((g) => { secBox[g.key] = document.getElementById("secl-" + g.key); });
+    D.homes.forEach((h) => secBox[h.section].appendChild(cards[h.id]));
+    document.querySelector(".onehome").hidden = true;
+  }
 
   function sortBy(key) {
-    D.homes.slice().sort(SORTS[key]).forEach((h) => list.appendChild(document.getElementById("h-" + h.id)));
+    D.homes.slice().sort(SORTS[key]).forEach((h) => (SECS.length ? secBox[h.section] : list).appendChild(document.getElementById("h-" + h.id)));
     $("#sort-title").textContent = SORT_TITLE[key];
     document.querySelectorAll("#sort button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.sort === key));
     store.set("sort:" + D.slug, key);
@@ -350,6 +382,10 @@ footer p { margin: 0 }
       const show = shown(h);
       document.getElementById("h-" + h.id).hidden = !show;
       if (mapApi && mapApi.show) mapApi.show(h.id, show);
+    });
+    (D.sections || []).forEach((g) => {
+      const any = D.homes.some((h) => h.section === g.key && shown(h));
+      document.querySelector("#sec-" + g.key + " .sec-empty").hidden = any;
     });
   }
   function applyFilter(k) {
@@ -511,9 +547,9 @@ footer p { margin: 0 }
   $("#chips").innerHTML = A.map((a, i) => a.pin === false ? "" : `<button class="chip" id="t-a${i}" aria-pressed="true">${a.shape === "area" ? '<span class="sw sand"></span>' : a.shape === "line" ? `<span class="sw line" style="color:var(--a${i})"></span>` : `<span class="apin a${i}">${esc(a.letter)}</span>`}${esc(a.label)}</button>`).join("")
     + '<button class="chip" id="t-parks" aria-pressed="true"><span class="sw park"></span>Parks</button><button class="chip fit" id="t-fit">Show all homes</button>';
   const PLACES = [...new Set(A.map((a) => a.label))];
-  const MOVER = A0.profile === "foot" ? "a walker follows" : A0.profile === "bike" ? "a bike rides" : "a car drives";
+  const MOVER = D.noMover ? "" : A0.profile === "foot" ? "a walker follows" : A0.profile === "bike" ? "a bike rides" : "a car drives";
   const BUILDINGS = D.homes.some((h) => h.building);
-  $("#map-note").textContent = `Tap a ${BUILDINGS ? "building" : "home"} to see its routes to ${PLACES.join(", ")}; ${MOVER} the ${VERB[A0.profile] || ""} route to ${A0.label} (tap it to go again). ${D.routeNote} ${BUILDINGS ? "Each pin is a building, with how many of its units are shown. " : ""}Pin color: green fits the brief as listed, gold has items to confirm, red misses part of the brief.`;
+  $("#map-note").textContent = `Tap a ${BUILDINGS ? "building" : "home"} to see its routes to ${PLACES.join(", ")}${MOVER ? `; ${MOVER} the ${VERB[A0.profile] || ""} route to ${A0.label} (tap it to go again)` : ""}. ${D.routeNote} ${BUILDINGS ? "Each pin is a building, with how many of its units are shown. " : ""}Pin color: green fits the brief as listed, gold has items to confirm, red misses part of the brief.`;
 
   if (!window.L) { $("#map").innerHTML = '<p class="note" style="padding:16px">The map could not load. The homes and distances below are complete.</p>'; return; }
 
@@ -687,7 +723,7 @@ footer p { margin: 0 }
     selG.addLayer(rider);
     // frame the first anchor's route (the client's lead priority); the other routes run off the edge and show on zoom-out
     map.flyToBounds(L.latLngBounds(first).pad(0.5), { maxZoom: 17, duration: reduce.matches ? 0 : 0.6 });
-    map.once("moveend", () => drive(first, rider));
+    if (D.noMover) map.removeLayer(rider); else map.once("moveend", () => drive(first, rider));
     if (from === "map") { openCard(id); document.getElementById("h-" + id).scrollIntoView({ block: "nearest", behavior: "smooth" }); }
   }
   mapApi = { select, show: (id, on) => { showHome(id, on); if (!on && cur === id) { cancelAnimationFrame(anim); selG.clearLayers(); setPin(cur, false); cur = null; } } };

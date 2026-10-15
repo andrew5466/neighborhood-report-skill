@@ -101,7 +101,7 @@ def main_anchors(root, cfg):
             "id": L["id"], "n": L["n"], "name": L["name"], "unit": L.get("unit", ""), "addr": L["addr"].rsplit(", FL", 1)[0],
             "area": L.get("area", ""), "kind": L.get("kind", ""), "kindLabel": L.get("kindLabel", ""), "lat": L["lat"], "lon": L["lon"], "rent": L["rent"], "status": status,
             "rentText": c["rentText"], "rentSub": c["rentSub"], "rentConfirm": c.get("rentConfirm", False),
-            "prio": c["prio"], "details": c["details"], "flags": c["flags"], "pros": c["pros"], "cons": c["cons"],
+            "prio": c.get("prio", []), "details": c["details"], "flags": c["flags"], "pros": c.get("pros", []), "cons": c.get("cons", []),
             "r": routes.get(L["id"]), "photo": photos.get(L["id"]), "to": measures[L["id"]]["to"],
         })
         # optional fields, only when the client uses them (older pages rebuild unchanged): "building" for one pin per
@@ -126,7 +126,49 @@ def main_anchors(root, cfg):
         data["filterGroups"] = check_filter_groups(cfg["filterGroups"], homes)
     if cfg.get("showLongWalks"):
         data["showLongWalks"] = True
-    finish(root, cfg, data, homes, "template-anchors.html", {})
+    if cfg.get("noMover"):
+        data["noMover"] = True
+    if cfg.get("maxWalkMin"):
+        data["maxWalkMin"] = int(cfg["maxWalkMin"])
+    if cfg.get("notes"):
+        data["notes"] = list(cfg["notes"])
+    if cfg.get("sections"):
+        data["sections"] = check_sections(cfg["sections"], homes)
+    template = "template-anchors.html"
+    if cfg.get("layout") == "buildings":
+        # buildings layout: groups (sections) of buildings, each building's walks and facts once, its units underneath
+        data["buildings"] = json.loads((root / "data/buildings.json").read_text())
+        missing = sorted({h["building"] for h in homes} - set(data["buildings"]))
+        if missing or not cfg.get("sections"):
+            raise SystemExit("ERROR: buildings layout needs data/buildings.json entries for %s and client.json sections" % (missing or "-"))
+        for h in homes:
+            h["spec"] = cards[h["id"]].get("spec", "")
+            if cfg.get("noFlags"):
+                # a market report: every option on equal footing, no red/gold judgement (Confirm tags on unverified facts stay)
+                h["flags"], h["status"] = [], "info"
+        template = "template-buildings.html"
+    finish(root, cfg, data, homes, template, {})
+
+
+def check_sections(sections, homes):
+    """client.json "sections": [{"key", "title", "sub", "onehome": {"label", "url"}, "ids": [listing ids]}]. Every home
+    shown must sit in exactly one section; the page lists each section with its own heading and OneHome link."""
+    errors, seen = [], {}
+    ids = {h["id"] for h in homes}
+    for g in sections:
+        for i in g.get("ids", []):
+            if i in seen:
+                errors.append("home %s is in sections %s and %s" % (i, seen[i], g["key"]))
+            seen[i] = g["key"]
+    for h in homes:
+        if h["id"] not in seen:
+            errors.append("home %s is in no section" % h["id"])
+        else:
+            h["section"] = seen[h["id"]]
+    errors += ["section id %s is not a listing on the page" % i for i in seen if i not in ids]
+    if errors:
+        raise SystemExit("ERROR:\n  " + "\n  ".join(errors))
+    return [{k: g[k] for k in ("key", "title", "sub", "onehome") if k in g} for g in sections]
 
 
 def check_filter_groups(groups, homes):

@@ -54,6 +54,8 @@ C="/Users/andrewgarcia/Obsidian-Vault/Brain/Real Estate/Market Intel/<Client> Ma
 
 **What the page does (no per-client code):** collapsed cards (number, name, price) that open one at a time; photo; Beach (walk minutes by route + straight-line), Bike (ride minutes to the path), Privacy; red/gold flags; Interested / Pass + Compare buttons; sort switch (Beach / Rent / Ride); compare table of up to 3 homes; Copy my picks; map with the path, bike lanes, sand, the place type, and on tap the walking route plus a bike icon riding the bike route.
 
+**Kevin & James rules (Andrew, 2026-10-15):** a client report is a **market report**: show every home Andrew sends (no top-4 picks; the client chooses), grouped as Andrew groups them, each group with its own OneHome link; filters keep the page short; homes above the range are there for reference, with no red flags (`noFlags`); a walk over 20 minutes is shown in miles (`maxWalkMin: 20`); no animations (`noMover`); map at the bottom; buildings first, units underneath (`layout: "buildings"`). The client's named places only (no clubs, pizza, bikes or gyms they didn't name). Example: `Kevin & James Map/client.json`.
+
 **Client page rules (Andrew, 2026-10-14):** cards collapsed to number, name and price; the client's priorities lead each open card; no agent opinion on the page ("Andrew's pick", "best building"); no restated brief section. Gates below still apply.
 
 **Shell tip:** the security hook can fail on long `python3 - <<EOF` heredocs; write the script to the scratchpad and run the file.
