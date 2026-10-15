@@ -373,7 +373,7 @@ details.binfo .facts { padding-bottom: 12px }
         <p class="walkline">${A.map((a) => `<span>${esc(a.short)} <b>${howFar(h0, a)}</b></span>`).join(" ")}</p>
         ${B.facts && B.facts.length ? `<details class="binfo"><summary>Building info</summary><dl class="facts">${B.facts.map((f) => `<dt>${esc(f.k)}</dt><dd>${esc(f.t)}${tag(f.c)}</dd>`).join("")}</dl></details>` : ""}
         <div class="ulist">${us.map(unitRow).join("")}</div>
-        <div class="bfoot"><button class="act" data-map="${esc(b)}">Show on map</button></div>
+        <div class="bfoot">${B.onehome ? `<a class="act" href="${esc(B.onehome.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none">${esc(B.onehome.label || "See on OneHome")} ↗</a>` : ""}<button class="act" data-map="${esc(b)}">Show on map</button></div>
       </div>
     </div>`;
   }).join("");
