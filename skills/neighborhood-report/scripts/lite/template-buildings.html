@@ -218,48 +218,63 @@ footer p { margin: 0 }
 .prio > div { grid-template-columns: 92px minmax(0, 1fr) }
 .prio dt { white-space: nowrap }
 .pin.st-info, .st-info .num, .bpin.st-info .dot { background: var(--ink) } :root .st-info .num { color: var(--bg) }
-/* buildings layout: groups of buildings, each with its units underneath; filters on top; map at the bottom */
-.wrap { max-width: 900px }
-.fbar { background: var(--bg); padding-block: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; border-bottom: 1px solid var(--line) }
+/* buildings layout, calm version: small map first, then filters, then one line per building; everything else opens on tap */
+.wrap { max-width: 760px }
+header { margin-bottom: 10px }
+.notes { border-left-width: 3px; margin-bottom: 12px }
+.mapsec { display: grid; gap: 6px; scroll-margin-top: 12px }
+#map { height: 30vh; min-height: 210px; max-height: 330px; border-radius: 12px; border: 1px solid var(--line); overflow: hidden }
+.mapnote { margin: 0; color: var(--muted); font-size: .8rem }
+.fbar { padding-block: 12px 6px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
 .fbar .seg { max-width: 100%; overflow-x: auto; min-width: 0 }
 .fbar .seg button { white-space: nowrap; padding: 0 13px }
-@media (min-width: 700px) { .fbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20 } }
-.fbar .count { font-size: .85rem; color: var(--muted); margin-left: auto }
-.fbar .act { min-height: 40px }
-.groups { display: grid; gap: 22px; margin-top: 14px; min-width: 0 }
-.sec { display: grid; gap: 12px; min-width: 0 }
-.sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; padding-top: 8px; border-top: 2px solid var(--ink) }
-.sec-head h2 { font-size: 1.15rem; letter-spacing: .03em }
-.sec-head .note { flex-basis: 100%; margin: 0 }
-.sec-head .btn { min-height: 40px; font-size: .88rem }
-.bld { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; min-width: 0; scroll-margin-top: 70px }
-.bld.flash { box-shadow: 0 0 0 2px var(--ink) }
-.bld-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; align-items: baseline }
-.bld-top h3 { font-size: 1.12rem }
-.bld-top .addr { margin: 0 }
-.walks { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px }
-.wk { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line) }
-.wk .lab { display: flex; align-items: center; gap: 6px; font: 700 .7rem var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted) }
-.wk .lab i { width: 10px; height: 10px; border-radius: 3px; flex: none }
-.wk b { font: 600 1.05rem var(--f-mono); font-variant-numeric: tabular-nums }
-.wk small { color: var(--muted); font-size: .76rem }
-.facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: .92rem }
-.facts dt { color: var(--muted); font-weight: 600 }
+.fbar .count { font-size: .85rem; color: var(--muted) }
+.fbar .tools { display: flex; gap: 8px; margin-left: auto }
+.blist { display: grid; gap: 0; border-top: 1px solid var(--line); margin-top: 4px }
+.blist > *, .bbody > *, .ulist > * { min-width: 0 }
+.brow { border-bottom: 1px solid var(--line); scroll-margin-top: 12px }
+.bhead { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 14px 4px; min-height: 56px }
+.bhead:focus-visible { outline: 3px solid var(--walk); outline-offset: -3px }
+.bhead .bn { font: 600 1.02rem var(--f-body); color: var(--ink) }
+.bhead .bs { display: block; font-size: .82rem; color: var(--muted); margin-top: 1px }
+.bhead .bp { font: 500 .92rem var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink) }
+.bhead[aria-expanded="true"] .chev { transform: rotate(-135deg); margin: 4px 4px 0 }
+.bbody { padding: 0 4px 16px; display: grid; gap: 12px }
+.walkline { margin: 0; font-size: .9rem; color: var(--ink); line-height: 1.6 }
+.walkline span { white-space: nowrap }
+.walkline span + span::before { content: "·"; color: var(--muted); margin: 0 7px }
+.walkline b { font-weight: 600 }
+details.binfo { border: 1px solid var(--line); border-radius: 10px; padding: 0 12px }
+details.binfo > summary { cursor: pointer; padding: 10px 0; font-weight: 600; font-size: .9rem; color: var(--ink); min-height: 40px; display: flex; align-items: center }
+details.binfo .facts { padding-bottom: 12px }
+.facts { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; font-size: .9rem }
+.facts dt { color: var(--muted) }
 .facts dd { margin: 0 }
-.units { display: grid; gap: 8px }
-.units .home { border-radius: 10px }
-.units .head { padding: 10px 12px; min-height: 52px }
-.units .head h4 { margin: 0; font: 700 1rem var(--f-body) }
-.units .head .spec { display: block; color: var(--muted); font: 400 .82rem var(--f-body) }
-.bld-foot { display: flex; flex-wrap: wrap; gap: 8px }
-.hidden-note { margin: 0; color: var(--muted); font-size: .85rem }
-.mapsec { margin-top: 28px; display: grid; gap: 8px; scroll-margin-top: 70px }
-.mapsec h2 { font-size: 1.05rem; letter-spacing: .1em; text-transform: uppercase }
-#map { height: 62vh; min-height: 360px; border-radius: 14px; border: 1px solid var(--line); overflow: hidden }
-.pop { display: grid; gap: 6px; min-width: 190px; font: .88rem var(--f-body) }
-.pop b { font: 700 .98rem var(--f-display) }
+.ulist { display: grid; gap: 0; border-top: 1px solid var(--line) }
+.urow { border-bottom: 1px solid var(--line) }
+.uhead { all: unset; box-sizing: border-box; cursor: pointer; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 11px 2px; min-height: 48px }
+.uhead:focus-visible { outline: 3px solid var(--walk); outline-offset: -3px }
+.uhead .un { font-weight: 600; font-size: .95rem }
+.uhead .us { color: var(--muted); font-size: .84rem; margin-left: 6px }
+.uhead .up { font: 500 .9rem var(--f-mono); white-space: nowrap }
+.uhead[aria-expanded="true"] .chev { transform: rotate(-135deg); margin: 4px 4px 0 }
+.ubody { padding: 4px 2px 14px; display: grid; gap: 10px }
+.ubody .photo { margin: 0 }
+.ubody .more { padding: 0 }
+.ubody .choice { padding: 0; border: 0 }
+.bfoot { display: flex; gap: 8px; flex-wrap: wrap }
+.bfoot .act { min-height: 38px; font-size: .85rem }
+.links { margin-top: 26px; display: grid; gap: 8px }
+.links h2 { font-size: .9rem; letter-spacing: .1em; text-transform: uppercase }
+.links ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line) }
+.links li { border-bottom: 1px solid var(--line) }
+.links a { display: flex; justify-content: space-between; gap: 10px; padding: 12px 4px; color: var(--ink); text-decoration: none; font-size: .92rem }
+.links a span:last-child { color: var(--muted); white-space: nowrap }
+.pop { display: grid; gap: 6px; min-width: 180px; font: .88rem var(--f-body) }
+.pop b { font: 600 .95rem var(--f-body) }
 .pop button { all: unset; cursor: pointer; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font-weight: 600; text-align: center }
 .pop button:focus-visible { outline: 3px solid var(--walk); outline-offset: 2px }
+.mine { margin-left: 6px }
 </style>
 
 <div class="wrap">
@@ -271,22 +286,24 @@ footer p { margin: 0 }
 
   <aside class="notes" id="notes" aria-label="Notes" hidden></aside>
 
+  <section class="mapsec" id="mapsec" aria-label="Map">
+    <div id="map" role="region" aria-label="Map with each building and the places that matter to you"></div>
+    <p class="mapnote" id="map-note"></p>
+  </section>
+
   <div class="fbar" id="fbar" role="group" aria-label="Filter homes">
     <div class="fgroups" id="fgroups" hidden></div>
     <span class="count" id="count" aria-live="polite"></span>
-    <button class="act" id="copy" disabled>Copy my picks</button>
-    <a class="act" href="#mapsec" style="display:inline-flex;align-items:center;text-decoration:none">Map</a>
+    <span class="tools"><button class="act" id="copy" disabled>Copy my picks</button><a class="act" href="#mapsec" style="display:inline-flex;align-items:center;text-decoration:none">Map</a></span>
     <p class="note" id="copy-msg" aria-live="polite" style="flex-basis:100%;margin:0"></p>
     <textarea id="copy-out" class="copyout" rows="4" hidden aria-label="Your picks"></textarea>
   </div>
 
-  <div class="groups" id="groups"></div>
+  <div class="blist" id="blist"></div>
 
-  <section class="mapsec" id="mapsec" aria-label="Map">
-    <h2>Map</h2>
-    <div id="map" role="region" aria-label="Map with the buildings and the places that matter to you"></div>
-    <div class="chips" role="group" aria-label="Map layers" id="chips"></div>
-    <p class="note" id="map-note"></p>
+  <section class="links" id="links" aria-label="Listings on OneHome" hidden>
+    <h2>See the listings on OneHome</h2>
+    <ul id="linklist"></ul>
   </section>
 
   <footer>
@@ -309,35 +326,32 @@ footer p { margin: 0 }
   const mins = (m) => m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? " " + (m % 60) + " min" : ""}` : `${m} min`;
   // a walk over client.json "maxWalkMin" minutes is shown as a distance in miles, not a walking time
   const tooFar = (r, a) => r && a.profile === "foot" && D.maxWalkMin && r.min > D.maxWalkMin;
+  const howFar = (h, a) => { const r = h.r && h.r[a.key];
+    return tooFar(r, a) ? `${r.mi.toFixed(1)} mi` : r ? `${mins(r.min)} ${VERB[a.profile] || "trip"}` : `${h.to[a.key].toFixed(1)} mi`; };
   const tag = (c) => c ? '<span class="c">Confirm</span>' : "";
+  const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
   const store = { get(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } },
                   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
-  // ---------- buildings, in the order their units appear ----------
   const BLD = D.buildings, bOrder = [];
   D.homes.forEach((h) => { if (!bOrder.includes(h.building)) bOrder.push(h.building); });
   const unitsOf = (b) => D.homes.filter((h) => h.building === b);
-  const walkOf = (b, a) => { const h = unitsOf(b)[0]; const r = h.r && h.r[a.key]; return r ? r : null; };
 
   if (D.notes && D.notes.length) { $("#notes").innerHTML = "<h2>Notes</h2>" + D.notes.map((n) => `<p>${esc(n)}</p>`).join(""); $("#notes").hidden = false; }
+  if (D.sections && D.sections.some((g) => g.onehome)) {
+    $("#linklist").innerHTML = D.sections.filter((g) => g.onehome).map((g) => `<li><a href="${esc(g.onehome.url)}" target="_blank" rel="noopener"><span>${esc(g.title)}</span><span>OneHome ↗</span></a></li>`).join("");
+    $("#links").hidden = false;
+  }
 
-  // ---------- render groups → buildings → units ----------
-  const walkTiles = (b) => A.map((a, i) => {
-    const r = walkOf(b, a), h = unitsOf(b)[0];
-    const big = tooFar(r, a) ? r.mi.toFixed(1) + " mi" : r ? mins(r.min) : h.to[a.key].toFixed(1) + " mi";
-    const small = tooFar(r, a) ? "away by street" : r ? `${VERB[a.profile] || "trip"} · ${r.mi.toFixed(1)} mi` : "straight-line";
-    return `<div class="wk"><span class="lab"><i style="background:var(--a${i})"></i>${esc(a.short)}</span><b>${big}</b><small>${small}</small></div>`;
-  }).join("");
-  const unitCard = (h) => `<article class="home st-${h.status}" id="h-${h.id}">
-      <button class="head" data-id="${h.id}" aria-expanded="false" aria-controls="b-${h.id}">
-        <span class="num">${h.n}</span>
-        <h4>${h.unit ? "#" + esc(h.unit) : esc(h.name)} <span class="mine" hidden></span><span class="spec">${esc(h.spec || "")}</span></h4>
-        <span class="rent">${esc(h.rentText.replace("/mo", ""))}<small>/mo</small></span>
+  // ---------- one line per building; it opens to the walks, a "Building info" dropdown and every unit ----------
+  const unitRow = (h) => `<div class="urow" id="h-${h.id}">
+      <button class="uhead" data-id="${h.id}" aria-expanded="false" aria-controls="b-${h.id}">
+        <span><span class="un">${h.unit ? "#" + esc(h.unit) : esc(h.name)}</span><span class="us">${esc(h.spec || "")}</span><span class="mine" hidden></span></span>
+        <span class="up">${esc(h.rentText.replace("/mo", ""))}<small>/mo</small></span>
         <span class="chev" aria-hidden="true"></span>
       </button>
-      <div class="body" id="b-${h.id}" hidden>
+      <div class="ubody" id="b-${h.id}" hidden>
         ${h.photo ? `<figure class="photo"><div class="frame"><img src="${h.photo.src}" alt="Listing photo of ${esc(h.name)}${h.unit ? " #" + esc(h.unit) : ""}" loading="lazy"></div><figcaption>${esc(h.photo.credit)}</figcaption></figure>` : ""}
-        ${h.flags.length ? `<ul class="flags">${h.flags.map((f) => `<li class="${f.l}">${esc(f.t)}</li>`).join("")}</ul>` : ""}
         <div class="more"><dl><dt>Rent</dt><dd>${esc(h.rentText)}. ${esc(h.rentSub)}${tag(h.rentConfirm)}</dd>
           ${h.details.map((d) => `<dt>${esc(d.k)}</dt><dd>${esc(d.v)}${tag(d.c)}</dd>`).join("")}</dl></div>
         <div class="choice" data-id="${h.id}">
@@ -346,24 +360,22 @@ footer p { margin: 0 }
           <p class="hint" hidden></p>
         </div>
       </div>
-    </article>`;
-  const bldBlock = (b, sec) => {
-    const B = BLD[b] || { name: b, facts: [] };
-    const us = unitsOf(b).filter((h) => h.section === sec);
-    return `<div class="bld" id="bld-${esc(sec)}-${esc(b)}" data-b="${esc(b)}">
-      <div class="bld-top"><h3>${esc(B.name)}</h3><p class="addr">${esc(B.addr || "")}</p></div>
-      <div class="walks">${walkTiles(b)}</div>
-      ${B.facts && B.facts.length ? `<dl class="facts">${B.facts.map((f) => `<dt>${esc(f.k)}</dt><dd>${esc(f.t)}${tag(f.c)}</dd>`).join("")}</dl>` : ""}
-      <div class="units">${us.map(unitCard).join("")}</div>
-      <div class="bld-foot"><button class="act" data-map="${esc(b)}">Show on map</button></div>
     </div>`;
-  };
-  $("#groups").innerHTML = D.sections.map((g) => {
-    const bs = bOrder.filter((b) => D.homes.some((h) => h.building === b && h.section === g.key));
-    return `<section class="sec" id="sec-${esc(g.key)}" aria-label="${esc(g.title)}">
-      <div class="sec-head"><h2>${esc(g.title)}</h2>${g.onehome ? `<a class="btn" href="${esc(g.onehome.url)}" target="_blank" rel="noopener">${esc(g.onehome.label || "See on OneHome")}</a>` : ""}${g.sub ? `<p class="note">${esc(g.sub)}</p>` : ""}</div>
-      ${bs.map((b) => bldBlock(b, g.key)).join("")}
-    </section>`;
+  $("#blist").innerHTML = bOrder.map((b) => {
+    const B = BLD[b] || { name: b, facts: [] }, us = unitsOf(b), h0 = us[0];
+    return `<div class="brow" id="bld-${esc(b)}" data-b="${esc(b)}">
+      <button class="bhead" data-b="${esc(b)}" aria-expanded="false" aria-controls="bb-${esc(b)}">
+        <span><span class="bn">${esc(B.name)}</span><span class="bs" data-sum="${esc(b)}"></span></span>
+        <span class="bp" data-range="${esc(b)}"></span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+      <div class="bbody" id="bb-${esc(b)}" hidden>
+        <p class="walkline">${A.map((a) => `<span>${esc(a.short)} <b>${howFar(h0, a)}</b></span>`).join(" ")}</p>
+        ${B.facts && B.facts.length ? `<details class="binfo"><summary>Building info</summary><dl class="facts">${B.facts.map((f) => `<dt>${esc(f.k)}</dt><dd>${esc(f.t)}${tag(f.c)}</dd>`).join("")}</dl></details>` : ""}
+        <div class="ulist">${us.map(unitRow).join("")}</div>
+        <div class="bfoot"><button class="act" data-map="${esc(b)}">Show on map</button></div>
+      </div>
+    </div>`;
   }).join("");
 
   // ---------- filters (client.json "filterGroups"); everything shows until a filter is chosen ----------
@@ -371,23 +383,25 @@ footer p { margin: 0 }
   const shown = (h) => FG.every((g) => g.toggle ? !gState[g.key] || h[g.field] === true : !gState[g.key] || gState[g.key] === "all" || String(h[g.field]) === gState[g.key]);
   let mapApi = null;
   function applyView() {
-    let n = 0;
+    let n = 0, nb = 0;
     D.homes.forEach((h) => { const s = shown(h); document.getElementById("h-" + h.id).hidden = !s; if (s) n++; });
-    document.querySelectorAll(".bld").forEach((el) => {
-      const sec = el.closest(".sec").id.slice(4);
-      el.hidden = !D.homes.some((h) => h.building === el.dataset.b && h.section === sec && shown(h));
+    bOrder.forEach((b) => {
+      const v = unitsOf(b).filter(shown), row = document.getElementById("bld-" + b);
+      row.hidden = !v.length; if (v.length) nb++;
+      const rents = v.map((h) => h.rent), beds = [...new Set(v.map((h) => h.beds))].sort();
+      document.querySelector(`[data-sum="${b}"]`).textContent = `${v.length} ${v.length === 1 ? "home" : "homes"} · ${beds.map((x) => x + " bed").join(", ")}`;
+      document.querySelector(`[data-range="${b}"]`).textContent = rents.length ? money(Math.min(...rents)) + (Math.max(...rents) !== Math.min(...rents) ? "–" + money(Math.max(...rents)) : "") : "";
     });
-    D.sections.forEach((g) => { $("#sec-" + g.key).hidden = !D.homes.some((h) => h.section === g.key && shown(h)); });
-    $("#count").textContent = `${n} of ${D.homes.length} homes`;
+    $("#count").textContent = `${n} ${n === 1 ? "home" : "homes"} in ${nb} ${nb === 1 ? "building" : "buildings"}`;
     if (mapApi) mapApi.refresh();
   }
   if (FG.length) {
     const saved = store.get("groups:" + D.slug) || {};
     $("#fgroups").innerHTML = FG.map((g) => g.toggle
-      ? `<button class="act tog" data-g="${esc(g.key)}" aria-pressed="false">${esc(g.label)} (${D.homes.filter((h) => h[g.field] === true).length})</button>`
+      ? `<button class="act tog" data-g="${esc(g.key)}" aria-pressed="false">${esc(g.label)}</button>`
       : `<div class="seg" role="group" aria-label="${esc(g.label)}">${g.options.map((o) => {
           const n = o.key === "all" ? D.homes.length : D.homes.filter((h) => String(h[g.field]) === o.key).length;
-          return `<button data-g="${esc(g.key)}" data-v="${esc(o.key)}" aria-pressed="false"${n ? "" : " disabled"}>${esc(o.label)} (${n})</button>`;
+          return `<button data-g="${esc(g.key)}" data-v="${esc(o.key)}" aria-pressed="false"${n ? "" : " disabled"}>${esc(o.label)}</button>`;
         }).join("")}</div>`).join("");
     $("#fgroups").hidden = false;
     const paint = () => document.querySelectorAll("#fgroups [data-g]").forEach((b) => b.setAttribute("aria-pressed",
@@ -401,26 +415,32 @@ footer p { margin: 0 }
     paint();
   }
 
-  // ---------- unit cards open one at a time ----------
-  const groupsEl = $("#groups");
-  function openCard(id) {
-    groupsEl.querySelectorAll(".head").forEach((b) => {
-      const open = b.dataset.id === id;
-      b.setAttribute("aria-expanded", open);
-      document.getElementById("b-" + b.dataset.id).hidden = !open;
-      document.getElementById("h-" + b.dataset.id).classList.toggle("on", open);
+  // ---------- open and close: one building at a time, one unit at a time ----------
+  const blist = $("#blist");
+  function openBuilding(b, on) {
+    blist.querySelectorAll(".bhead").forEach((x) => {
+      const open = on && x.dataset.b === b;
+      x.setAttribute("aria-expanded", open);
+      document.getElementById("bb-" + x.dataset.b).hidden = !open;
+    });
+  }
+  function openUnit(id, on) {
+    blist.querySelectorAll(".uhead").forEach((x) => {
+      const open = on && x.dataset.id === id;
+      x.setAttribute("aria-expanded", open);
+      document.getElementById("b-" + x.dataset.id).hidden = !open;
     });
   }
 
-  // ---------- Interested / Pass: kept on this device; a comment pinned to the button carries the note to Andrew ----------
+  // ---------- Interested / Pass ----------
   const PK = "picks:" + D.slug;
   const picks = store.get(PK) || {};
   const comments = window.claude && window.claude.use ? window.claude.use("comments").catch(() => null) : Promise.resolve(null);
   function paintPick(id) {
-    const v = picks[id], card = document.getElementById("h-" + id), chip = card.querySelector(".mine");
-    card.querySelectorAll("[data-pick]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.pick === v));
+    const v = picks[id], row = document.getElementById("h-" + id), chip = row.querySelector(".mine");
+    row.querySelectorAll("[data-pick]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.pick === v));
     chip.hidden = !v; chip.textContent = v === "yes" ? "Interested" : v === "no" ? "Pass" : "";
-    chip.className = "mine " + (v || ""); card.classList.toggle("pass", v === "no");
+    chip.className = "mine " + (v || "");
   }
   D.homes.forEach((h) => paintPick(h.id));
   const updateCopy = () => { $("#copy").disabled = !Object.keys(picks).length; };
@@ -435,34 +455,30 @@ footer p { margin: 0 }
     hint.textContent = "Saved on this device. Use Copy my picks to text them to Andrew.";
     const cm = await comments;
     if (!cm) return;
-    try { const res = await cm.openComposer({ element: btn }); if (res.opened) hint.textContent = "Add a note for Andrew in the comment box that just opened. He sees it pinned to this home."; } catch (e) {}
+    try { const res = await cm.openComposer({ element: btn }); if (res.opened) hint.textContent = "Add a note for Andrew in the comment box that just opened."; } catch (e) {}
   }
   $("#copy").addEventListener("click", async () => {
     const lines = [D.title + ": my picks"];
     [["yes", "Interested"], ["no", "Pass"]].forEach(([v, label]) => {
       const hs = D.homes.filter((h) => picks[h.id] === v);
-      if (hs.length) lines.push(label + ": " + hs.map((h) => `${h.name}${h.unit ? " #" + h.unit : ""} (${h.rentText})`).join("; "));
+      if (hs.length) lines.push(label + ": " + hs.map((h) => `${(BLD[h.building] || {}).name || h.name}${h.unit ? " #" + h.unit : ""} (${h.rentText})`).join("; "));
     });
     const text = lines.join("\n"), out = $("#copy-out");
     try { await navigator.clipboard.writeText(text); out.hidden = true; $("#copy-msg").textContent = "Copied. Paste it in a text to Andrew."; }
     catch (e) { out.hidden = false; out.value = text; out.focus(); out.select(); $("#copy-msg").textContent = "Select the text below and copy it."; }
   });
 
-  groupsEl.addEventListener("click", (e) => {
+  blist.addEventListener("click", (e) => {
     const pk = e.target.closest("[data-pick]"); if (pk) { choose(pk); return; }
-    const mp = e.target.closest("[data-map]"); if (mp) { if (mapApi) { $("#mapsec").scrollIntoView({ block: "start", behavior: "smooth" }); mapApi.selectB(mp.dataset.map); } return; }
-    const b = e.target.closest(".head"); if (!b) return;
-    if (b.getAttribute("aria-expanded") === "true") { b.setAttribute("aria-expanded", "false"); document.getElementById("b-" + b.dataset.id).hidden = true; document.getElementById("h-" + b.dataset.id).classList.remove("on"); return; }
-    openCard(b.dataset.id);
+    const mp = e.target.closest("[data-map]"); if (mp) { if (mapApi) { $("#mapsec").scrollIntoView({ block: "start", behavior: "smooth" }); mapApi.selectB(mp.dataset.map, false); } return; }
+    const u = e.target.closest(".uhead"); if (u) { openUnit(u.dataset.id, u.getAttribute("aria-expanded") !== "true"); return; }
+    const b = e.target.closest(".bhead"); if (b) { const on = b.getAttribute("aria-expanded") !== "true"; openBuilding(b.dataset.b, on); if (on && mapApi) mapApi.selectB(b.dataset.b, false); }
   });
   applyView();
 
-  // ---------- map (at the bottom): building bubbles, the places, routes on tap (no animation) ----------
-  $("#chips").innerHTML = A.map((a, i) => `<button class="chip" id="t-a${i}" aria-pressed="true">${a.shape === "area" ? '<span class="sw sand"></span>' : a.shape === "line" ? `<span class="sw line" style="color:var(--a${i})"></span>` : `<span class="apin a${i}">${esc(a.letter)}</span>`}${esc(a.label)}</button>`).join("")
-    + '<button class="chip fit" id="t-fit">Show all buildings</button>';
-  $("#map-note").textContent = `Each bubble is a building, with how many of its homes are shown. Tap one to see its walking routes to ${A.map((a) => a.label).join(", ")}. ${D.routeNote}`;
-  if (!window.L) { $("#map").innerHTML = '<p class="note" style="padding:16px">The map could not load. The buildings and walking times above are complete.</p>'; return; }
-
+  // ---------- the map: one dot per building; tap = its walking routes and a jump to its line ----------
+  $("#map-note").textContent = "Each dot is a building and its number of homes. Tap one to see its walks.";
+  if (!window.L) { $("#map").innerHTML = '<p class="note" style="padding:16px">The map could not load. The buildings below are complete.</p>'; return; }
   const B = D.base, sc = B.scale, fr = B.frame;
   const map = L.map("map", { preferCanvas: true, zoomSnap: 0.25, minZoom: 11.5, maxZoom: 18, scrollWheelZoom: false,
     maxBounds: [[fr.s, fr.w], [fr.n, fr.e]], maxBoundsViscosity: 0.8 });
@@ -470,6 +486,10 @@ footer p { margin: 0 }
   map.attributionControl.addAttribution("© OpenStreetMap contributors");
   ["base", "sel"].forEach((p, i) => { map.createPane(p).style.zIndex = 200 + i * 240; });
   map.getPane("tooltipPane").style.zIndex = 590;
+  // the view is set before any layer is added (Leaflet needs it to place vector layers)
+  const allBounds = L.latLngBounds(D.homes.map((h) => [h.lat, h.lon])).pad(0.12);
+  const fitAll = () => map.fitBounds(allBounds, { padding: [16, 16] });
+  fitAll();
   const styled = [];
   const add = (layer, fn) => { styled.push([layer, fn]); return layer; };
   const baseG = L.layerGroup().addTo(map);
@@ -484,61 +504,35 @@ footer p { margin: 0 }
     baseG.addLayer(add(L.polyline(lines, { pane: "base", interactive: false, weight: widths[ci] + 1.5 }), () => ({ color: tok("--road-edge") })));
     baseG.addLayer(add(L.polyline(lines, { pane: "base", interactive: false, weight: widths[ci] }), () => ({ color: tok("--road") })));
   }
-  D.waterLabels.forEach(([n, at]) => L.marker(at, { interactive: false, keyboard: false, icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<span class="wlbl">${n}</span>` }) }).addTo(map));
-  const lblG = L.layerGroup().addTo(map);
-  function drawLabels() {
-    lblG.clearLayers();
-    const z = map.getZoom(), maxCi = z >= 16.5 ? 4 : z >= 16 ? 3 : z >= 15 ? 2 : z >= 13.5 ? 0 : -1;
-    if (maxCi < 0) return;
-    const vb = map.getBounds().pad(0.1);
-    B.labels.forEach(([la, lo, ang, ci, ni]) => {
-      if (ci > maxCi) return;
-      const p = [la / sc, lo / sc];
-      if (!vb.contains(p)) return;
-      const name = B.names[ni].replace(/\bAvenue\b/, "Ave").replace(/\bStreet\b/, "St").replace(/\bDrive\b/, "Dr").replace(/\bRoad\b/, "Rd").replace(/\bBoulevard\b/, "Blvd");
-      lblG.addLayer(L.marker(p, { interactive: false, keyboard: false, pane: "base",
-        icon: L.divIcon({ className: "", iconSize: [0, 0], html: `<span class="lbl" style="transform:translate(-50%,-50%) rotate(${ang}deg)">${esc(name)}</span>` }) }));
-    });
-  }
-  map.on("zoomend moveend", drawLabels);
-
-  const anchorG = A.map((a, i) => {
+  A.forEach((a, i) => {
     if (a.shape) {
       const geo = ((D.shapes || {})[a.key] || { p: [] }).p.map((x) => decode(x, sc));
-      const lay = a.shape === "area"
-        ? add(L.polygon(geo, { pane: "base", weight: 0, fillOpacity: 1, interactive: false }), () => ({ fillColor: tok("--sand") }))
-        : add(L.polyline(geo, { weight: 6, opacity: .95 }), () => ({ color: tok("--a" + i) })).bindTooltip(esc(a.label), { className: "dist", sticky: true });
-      return L.layerGroup([lay]).addTo(map);
+      if (a.shape === "area") add(L.polygon(geo, { pane: "base", weight: 0, fillOpacity: 1, interactive: false }), () => ({ fillColor: tok("--sand") })).addTo(map);
+      else add(L.polyline(geo, { weight: 5, opacity: .9 }), () => ({ color: tok("--a" + i) })).bindTooltip(esc(a.label), { className: "dist", sticky: true }).addTo(map);
+      return;
     }
-    return L.layerGroup([L.marker([a.lat, a.lon], { title: a.label, keyboard: false, zIndexOffset: 400,
-      icon: L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15], html: `<span class="apin big a${i}">${esc(a.letter)}</span>` }) })
-      .bindTooltip(esc(a.label), { className: "dist", direction: "top", offset: [0, -14] })]).addTo(map);
+    L.marker([a.lat, a.lon], { title: a.label, keyboard: false, zIndexOffset: 400,
+      icon: L.divIcon({ className: "", iconSize: [26, 26], iconAnchor: [13, 13], html: `<span class="apin big a${i}" style="width:26px;height:26px;font-size:12px">${esc(a.letter)}</span>` }) })
+      .bindTooltip(esc(a.label), { className: "dist", direction: "top", offset: [0, -12] }).addTo(map);
   });
   const dest = (h, a) => a.shape ? (h.pt && h.pt[a.key]) : [a.lat, a.lon];
 
-  const RANK = { info: 0, fit: 0, confirm: 1, miss: 2 };
   const pins = {};
   bOrder.forEach((b) => {
     const us = unitsOf(b), Bn = (BLD[b] || {}).name || b;
-    const icon = (on) => {
-      const v = us.filter(shown), st = v.reduce((m, h) => RANK[h.status] < RANK[m] ? h.status : m, "miss");
-      return L.divIcon({ className: "", iconSize: [0, 0], html: `<span class="bpin st-${st}${on ? " on" : ""}"><span class="dot">${v.length}</span><span class="nm">${esc(Bn)}</span></span>` });
-    };
+    const icon = (on) => L.divIcon({ className: "", iconSize: [0, 0],
+      html: `<span class="bpin st-info${on ? " on" : ""}"><span class="dot">${us.filter(shown).length}</span><span class="nm">${esc(Bn)}</span></span>` });
     const mk = L.marker([us[0].lat, us[0].lon], { icon: icon(false), title: Bn, keyboard: true, riseOnHover: true, zIndexOffset: 500 }).addTo(map);
-    mk.on("click", () => selectB(b));
+    mk.on("click", () => selectB(b, true));
     pins[b] = { mk, icon, on: false };
   });
   const far = () => map.getContainer().classList.toggle("far", map.getZoom() < 14.5);
   map.on("zoomend", far);
-
-  const allBounds = L.latLngBounds(D.homes.map((h) => [h.lat, h.lon])
-    .concat(A.flatMap((a) => a.shape ? D.homes.map((h) => dest(h, a)).filter(Boolean) : [[a.lat, a.lon]]))).pad(0.06);
-  const fitAll = () => map.fitBounds(allBounds, { padding: [20, 20] });
-  fitAll(); far(); drawLabels();
+  far();
 
   const selG = L.layerGroup().addTo(map);
   let cur = null;
-  function selectB(b) {
+  function selectB(b, fromMap) {
     if (cur) { pins[cur].on = false; pins[cur].mk.setIcon(pins[cur].icon(false)); }
     cur = b; pins[b].on = true; pins[b].mk.setIcon(pins[b].icon(true));
     selG.clearLayers();
@@ -546,24 +540,18 @@ footer p { margin: 0 }
     let all = [p];
     A.map((a, i) => [a, i]).reverse().forEach(([a, i]) => {
       const r = h.r && h.r[a.key], to = dest(h, a) || p;
+      if (tooFar(r, a)) return; // a walk too long to show is not drawn either
       const pts = r ? decode(r.p, sc) : [p, to];
       all = all.concat(pts);
-      selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 8, opacity: .9, interactive: false }), () => ({ color: tok("--walk-casing") })).setStyle({ color: tok("--walk-casing") }));
-      selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 4.5, interactive: false, dashArray: r ? null : "4 8" }), () => ({ color: tok("--a" + i) })).setStyle({ color: tok("--a" + i) }));
+      selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 4, opacity: .9, interactive: false }), () => ({ color: tok("--a" + i) })).setStyle({ color: tok("--a" + i) }));
       selG.addLayer(L.circleMarker(to, { pane: "sel", radius: 1, opacity: 0, fillOpacity: 0, interactive: false })
-        .bindTooltip((tooFar(r, a) ? r.mi.toFixed(1) + " mi" : r ? mins(r.min) + " " + (VERB[a.profile] || "trip") : h.to[a.key].toFixed(1) + " mi") + " to " + esc(a.label), { permanent: true, className: "dist", direction: i % 2 ? "bottom" : "top", offset: i % 2 ? [0, 14] : [0, -16] }));
+        .bindTooltip(howFar(h, a) + " to " + esc(a.label), { permanent: true, className: "dist", direction: i % 2 ? "bottom" : "top", offset: i % 2 ? [0, 12] : [0, -14] }));
     });
-    const box = document.createElement("div");
-    box.className = "pop";
-    const n = unitsOf(b).filter(shown).length;
-    box.innerHTML = `<b>${esc((BLD[b] || {}).name || b)}</b><span>${n} ${n === 1 ? "home" : "homes"} shown</span><button>See its homes</button>`;
-    box.querySelector("button").addEventListener("click", () => {
-      map.closePopup();
-      const el = [...document.querySelectorAll(`.bld[data-b="${b}"]`)].find((x) => !x.hidden);
-      if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1600); }
-    });
-    L.popup({ offset: [0, -14], autoPan: false }).setLatLng(p).setContent(box).openOn(map);
-    map.fitBounds(L.latLngBounds(all).pad(0.15), { maxZoom: 16 });
+    map.fitBounds(L.latLngBounds(all).pad(0.2), { maxZoom: 16 });
+    if (fromMap) {
+      openBuilding(b, true);
+      document.getElementById("bld-" + b).scrollIntoView({ block: "start", behavior: "smooth" });
+    }
   }
   mapApi = {
     selectB,
@@ -574,14 +562,6 @@ footer p { margin: 0 }
     }),
   };
   mapApi.refresh();
-
-  const toggle = (btn, g) => $(btn).addEventListener("click", (e) => {
-    const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
-    e.currentTarget.setAttribute("aria-pressed", on);
-    on ? g.addTo(map) : map.removeLayer(g);
-  });
-  A.forEach((a, i) => toggle("#t-a" + i, anchorG[i]));
-  $("#t-fit").addEventListener("click", () => { selG.clearLayers(); map.closePopup(); if (cur) { pins[cur].on = false; pins[cur].mk.setIcon(pins[cur].icon(false)); cur = null; } fitAll(); });
 
   const restyle = () => styled.forEach(([l, fn]) => l.setStyle(fn()));
   restyle();
