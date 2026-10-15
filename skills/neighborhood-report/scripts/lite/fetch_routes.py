@@ -44,6 +44,8 @@ def main_anchors(root, cfg, listings):
     """Anchors mode: one route per home per anchor, with the anchor's profile ("car", "bike" or "foot").
     Writes {listing id: {anchor key: {"min", "mi", "p", "profile"}}}. Car times are free-flow estimates (no traffic)."""
     exclude = set(cfg.get("exclude", []))
+    # a shape anchor (a line such as Lincoln Road, or the beach) routes to the nearest point process.py stored per home
+    measures = json.loads((root / "data/measures.json").read_text()) if any(a.get("shape") for a in cfg["anchors"]) else {}
     cache, out = {}, {}
     for L in listings:
         if L["id"] in exclude:
@@ -54,7 +56,8 @@ def main_anchors(root, cfg, listings):
             prof = a.get("profile", "car")
             key = "%f,%f,%s,%s" % (home[0], home[1], a["key"], prof)
             if key not in cache:
-                cache[key] = dict(route(prof, home, (a["lat"], a["lon"])), profile=prof)
+                dest = tuple(measures[L["id"]]["point"][a["key"]]) if a.get("shape") else (a["lat"], a["lon"])
+                cache[key] = dict(route(prof, home, dest), profile=prof)
                 time.sleep(1.1)
             out[L["id"]][a["key"]] = cache[key]
         print("%-34s %s" % (L["name"] + " " + L.get("unit", ""), " | ".join(

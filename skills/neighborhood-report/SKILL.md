@@ -20,7 +20,7 @@ T="/Users/andrewgarcia/Obsidian-Vault/Brain/Real Estate/Market Intel/Neighborhoo
 | Use | When |
 |---|---|
 | **Lite** (default) | A shortlist already exists (Andrew's PDF or doc, a Matrix pull), 10 homes or fewer, and the client named what matters (beach, a path, a commute, a park). Kit: `Neighborhood Map Lite/` (read its `README.md`). |
-| **Lite, anchors mode** | Same as Lite, but the client's fixed places (school, work, a gym) drive the choice instead of the beach. `"mode": "anchors"` in `client.json`; Lite README, "Anchors mode". First client: Jensen, 2026-10-14 (revamped from Full). |
+| **Lite, anchors mode** | Same as Lite, but the client's fixed places (school, work, a gym, restaurants, a street like Lincoln Road, the beach) drive the choice. Supports shape anchors (a street or the beach), one pin per building, filter groups (bedrooms, South of Fifth) and `showLongWalks`; Lite README, "Anchors mode". Kevin v5 (2026-10-15) is the example: walking to Mila, Lincoln Road, the beach, the Delano and Carbone, no biking. `"mode": "anchors"` in `client.json`; Lite README, "Anchors mode". First client: Jensen, 2026-10-14 (revamped from Full). |
 | **Lite, anchors + areas** (replaces the bubble report, Andrew 2026-10-15) | The client is choosing between several neighborhoods. Same anchors page plus an `areas` list in `client.json`: an Areas row (homes, rent range, quickest time, places-only summary) that filters the map and list. Lite README, "Areas". |
 | **Full bubble tool** (legacy) | Only to update a report already built with it. New clients use Lite. No score rings in new work. |
 

@@ -104,14 +104,45 @@ def main_anchors(root, cfg):
             "prio": c["prio"], "details": c["details"], "flags": c["flags"], "pros": c["pros"], "cons": c["cons"],
             "r": routes.get(L["id"]), "photo": photos.get(L["id"]), "to": measures[L["id"]]["to"],
         })
+        # optional fields, only when the client uses them (older pages rebuild unchanged): "building" for one pin per
+        # building, and each field a filter group filters on
+        for k in ["building"] + [g["field"] for g in cfg.get("filterGroups", [])]:
+            if k in L:
+                homes[-1][k] = L[k]
+        if measures[L["id"]].get("point"):
+            homes[-1]["pt"] = measures[L["id"]]["point"]
     anchors = [{k: a[k] for k in ("key", "label", "short", "letter", "lat", "lon", "pin") if k in a} | {"profile": a.get("profile", "car"), "sortLabel": a.get("sortLabel", a["short"])}
+               | ({"shape": "area" if a["shape"].get("osm") == "beach" else "line"} if a.get("shape") else {})
                for a in cfg["anchors"]]
     data = {"slug": cfg["slug"], "title": cfg["title"], "homes": homes, "anchors": anchors,
             "waterLabels": cfg.get("waterLabels", []),
             "base": {k: base[k] for k in ("frame", "scale", "roadClasses", "sea", "islands", "water", "parks", "roads", "labels", "names")},
             "onehome": cfg["onehome"], "routeNote": cfg.get("routeNote", ""), "filters": cfg.get("filters", []),
             "areas": check_areas(cfg, homes)}
+    layers = json.loads((root / "data/layers.json").read_text()) if (root / "data/layers.json").exists() else {}
+    if layers.get("shapes"):
+        data["shapes"] = layers["shapes"]
+    if cfg.get("filterGroups"):
+        data["filterGroups"] = check_filter_groups(cfg["filterGroups"], homes)
+    if cfg.get("showLongWalks"):
+        data["showLongWalks"] = True
     finish(root, cfg, data, homes, "template-anchors.html", {})
+
+
+def check_filter_groups(groups, homes):
+    """client.json "filterGroups": [{"key", "label", "field", "options": [{"key", "label"}]} or {"key", "label", "field",
+    "toggle": true}]. Every home must carry each group's field (an option group matches str(value) to the option key;
+    a toggle matches value is True). Groups combine with AND, and with "filters" and "areas"."""
+    errors = []
+    for g in groups:
+        missing = [h["id"] for h in homes if g["field"] not in h]
+        if missing:
+            errors.append("filter group %r: homes without %r: %s (add it to data/listings.json)" % (g["key"], g["field"], ", ".join(missing)))
+        if not g.get("toggle") and not g.get("options"):
+            errors.append("filter group %r needs options or toggle" % g["key"])
+    if errors:
+        raise SystemExit("ERROR:\n  " + "\n  ".join(errors))
+    return [{k: g[k] for k in ("key", "label", "field", "options", "toggle") if k in g} for g in groups]
 
 
 def main(root):

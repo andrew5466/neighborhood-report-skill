@@ -52,28 +52,69 @@ def nearest(p, lines):
     return best
 
 
+def shape_lines(a, raw):
+    """A shape anchor's geometry from data/osm-raw.json (fetch_osm.py):
+    {"shape": {"osmName": "Lincoln Road"}} = every path/street way named exactly that (a line);
+    {"shape": {"osm": "beach", "minLat": 25.763}} = the closed natural=beach polygons (an area; its outline is measured)."""
+    sh, lines = a["shape"], []
+    for e in raw["elements"]:
+        if e["type"] != "way" or not e.get("geometry"):
+            continue
+        t = e.get("tags", {})
+        pts = [(g["lat"], g["lon"]) for g in e["geometry"]]
+        if sh.get("osm") == "beach":
+            if t.get("natural") == "beach" and pts[0] == pts[-1] and min(p[0] for p in pts) >= sh.get("minLat", -90):
+                lines.append({"pts": pts})
+        elif sh.get("osmName") and t.get("name") == sh["osmName"]:
+            lines.append({"pts": pts})
+    if not lines:
+        raise SystemExit("ERROR: anchor %s: no OpenStreetMap ways for %s in data/osm-raw.json (run fetch_osm.py with a bbox that covers it)"
+                         % (a["key"], json.dumps(sh)))
+    return lines
+
+
 def main_anchors(root, cfg):
-    """Anchors mode (client.json "mode": "anchors"): no OpenStreetMap pull. Each listing in data/listings.json carries
-    its own lat/lon (with a source); each anchor in client.json carries lat/lon. Writes data/measures.json with the
-    straight-line distance from every home to every anchor, and empty layers so build.py has one shape."""
+    """Anchors mode (client.json "mode": "anchors"). Each listing in data/listings.json carries its own lat/lon (with a
+    source). A point anchor carries lat/lon in client.json; a shape anchor ("shape", see shape_lines) is a line or an area
+    from data/osm-raw.json, measured to its nearest point, which is stored per home so fetch_routes.py can route there.
+    Writes data/measures.json (straight-line miles to every anchor, plus "point" for shape anchors) and data/layers.json
+    ("shapes": the encoded geometry per shape anchor, for the page)."""
     listings = json.loads((root / "data/listings.json").read_text())
     anchors = cfg["anchors"]
+    shapes, raw = {}, None
     for a in anchors:
-        if not isinstance(a.get("lat"), (int, float)) or not isinstance(a.get("lon"), (int, float)):
+        if a.get("shape"):
+            if raw is None:
+                raw = json.loads((root / "data/osm-raw.json").read_text())
+            shapes[a["key"]] = shape_lines(a, raw)
+        elif not isinstance(a.get("lat"), (int, float)) or not isinstance(a.get("lon"), (int, float)):
             raise SystemExit("ERROR: anchor %s has no lat/lon in client.json" % a.get("key"))
     measures = {}
     for L in listings:
         if not isinstance(L.get("lat"), (int, float)) or not isinstance(L.get("lon"), (int, float)):
             raise SystemExit("ERROR: listing %s has no lat/lon in data/listings.json" % L.get("id"))
         p = (L["lat"], L["lon"])
-        measures[L["id"]] = {"to": {a["key"]: round(hav_m(p, (a["lat"], a["lon"])) / 1609.344, 2) for a in anchors},
-                             "basis": "straight-line from each address point"}
+        to, point = {}, {}
+        for a in anchors:
+            if a["key"] in shapes:
+                d, q, _ = nearest(p, shapes[a["key"]])
+                to[a["key"]], point[a["key"]] = round(d / 1609.344, 2), [round(q[0], 6), round(q[1], 6)]
+            else:
+                to[a["key"]] = round(hav_m(p, (a["lat"], a["lon"])) / 1609.344, 2)
+        measures[L["id"]] = {"to": to, "basis": "straight-line from each address point"}
+        if point:
+            measures[L["id"]]["point"] = point
     (root / "data/measures.json").write_text(json.dumps(measures, indent=1), encoding="utf-8")
-    (root / "data/layers.json").write_text(json.dumps({"source": "none (anchors mode)"}), encoding="utf-8")
+    layers = {"source": "none (anchors mode)"} if not shapes else {
+        "source": "© OpenStreetMap contributors (ODbL)", "scale": SCALE,
+        "shapes": {k: {"kind": "area" if next(a for a in anchors if a["key"] == k)["shape"].get("osm") == "beach" else "line",
+                       "p": [encode(l["pts"]) for l in v]} for k, v in shapes.items()}}
+    (root / "data/layers.json").write_text(json.dumps(layers, separators=(",", ":")), encoding="utf-8")
     (root / "data/pois.json").write_text("[]", encoding="utf-8")
     for L in listings:
-        m = measures[L["id"]]["to"]
-        print("%-34s %s" % (L["name"] + " " + L.get("unit", ""), " | ".join("%s %.2f mi" % (a["short"], m[a["key"]]) for a in anchors)))
+        m, pt = measures[L["id"]]["to"], measures[L["id"]].get("point", {})
+        print("%-34s %s" % (L["name"] + " " + L.get("unit", ""), " | ".join(
+            "%s %.2f mi%s" % (a["short"], m[a["key"]], " @%.5f,%.5f" % tuple(pt[a["key"]]) if a["key"] in pt else "") for a in anchors)))
 
 
 def main(root):

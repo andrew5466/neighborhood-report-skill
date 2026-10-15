@@ -174,14 +174,35 @@ footer p { margin: 0 }
 .albl { position: absolute; transform: translate(-50%, 22px); white-space: nowrap; pointer-events: none; font: 700 11px var(--f-display);
   letter-spacing: .12em; text-transform: uppercase; color: var(--ink); text-shadow: 0 0 3px var(--land), 0 0 3px var(--land), 0 0 2px var(--land); opacity: .8 }
 [hidden] { display: none !important }
-:root { --a0: #c2410c; --a1: #4338ca; --a2: #0f766e; --fit: #1d7f55 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --fit: #4fc28f } }
-:root[data-theme="dark"] { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --fit: #4fc28f }
+:root { --a0: #c2410c; --a1: #4338ca; --a2: #0f766e; --a3: #a21caf; --a4: #1e293b; --fit: #1d7f55 }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --a3: #f0abfc; --a4: #e2e8f0; --fit: #4fc28f } }
+:root[data-theme="dark"] { --a0: #ff8a4c; --a1: #a5a0ff; --a2: #5eead4; --a3: #f0abfc; --a4: #e2e8f0; --fit: #4fc28f }
 .pin.st-fit, .st-fit .num { background: var(--fit) }
 :root .pin.st-fit { color: var(--surface) }
 .apin { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; font: 700 11px var(--f-mono); color: var(--surface); flex: none }
 .apin.big { width: 30px; height: 30px; border-radius: 8px; font-size: 14px; border: 2px solid var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.35) }
 .apin.a0, .dt-a0 i { background: var(--a0) } .apin.a1, .dt-a1 i { background: var(--a1) } .apin.a2, .dt-a2 i { background: var(--a2) }
+.apin.a3, .dt-a3 i { background: var(--a3) } .apin.a4, .dt-a4 i { background: var(--a4) }
+.sw.line { width: 22px; height: 0; border-top: 4px solid currentColor; border-radius: 2px }
+.sw.sand { height: 12px; border: 0; background: var(--sand); border-radius: 3px }
+.bpin { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; cursor: pointer;
+  padding: 5px 10px 5px 6px; border-radius: 999px; background: var(--surface); color: var(--ink); border: 2px solid var(--line);
+  box-shadow: 0 1px 4px rgba(0,0,0,.3); font: 700 12px var(--f-body); transition: transform .15s }
+.bpin .dot { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 11px var(--f-mono); color: var(--surface) }
+.bpin.st-fit .dot { background: var(--fit) } .bpin.st-confirm .dot { background: var(--gold) } .bpin.st-miss .dot { background: var(--red) }
+.bpin.on { border-color: var(--ink); transform: translate(-50%, -50%) scale(1.12); z-index: 2 }
+.far .bpin { padding: 3px; gap: 0 }
+.far .bpin .nm { display: none }
+#sort, .fgroups .seg { max-width: 100%; overflow-x: auto; min-width: 0; flex: 0 1 auto }
+.toolbar, .fgroups, .grid > * { min-width: 0 }
+.bchoose { display: grid; gap: 6px; min-width: 190px }
+.bchoose b { font: 700 .95rem var(--f-display) }
+.bchoose button { all: unset; cursor: pointer; display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; font: 600 .88rem var(--f-body); color: var(--ink); background: var(--surface) }
+.bchoose button:focus-visible { outline: 3px solid var(--walk); outline-offset: 2px }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--ink) }
+.fgroups { display: flex; flex-wrap: wrap; gap: 8px; flex-basis: 100% }
+.fgroups .seg button:disabled { opacity: .4; cursor: default }
+.act.tog[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink) }
 .dt-p i { background: var(--muted) }
 .sw.park { height: 12px; border: 0; background: var(--park); border-radius: 3px }
 .prio > div { grid-template-columns: 92px minmax(0, 1fr) }
@@ -206,6 +227,7 @@ footer p { margin: 0 }
 
     <section class="homes" aria-label="Homes">
       <div class="toolbar">
+        <div class="fgroups" id="fgroups" hidden></div>
         <div class="seg" id="filter" role="group" aria-label="Show homes or apartments" hidden></div>
         <div class="seg" id="sort" role="group" aria-label="Sort homes"></div>
         <div class="tools">
@@ -247,7 +269,9 @@ footer p { margin: 0 }
   const VERB = { car: "drive", bike: "ride", foot: "walk" };
   const A = D.anchors, A0 = A[0];
   const rmin = (h, k) => h.r && h.r[k] ? h.r[k].min : null;
-  const timeText = (h, a) => rmin(h, a.key) != null ? `${rmin(h, a.key)} min ${VERB[a.profile] || "trip"}` : `${h.to[a.key].toFixed(1)} mi`;
+  // client.json "showLongWalks": true shows every walk in full (1 h 45 min); otherwise a walk over 30 min reads "Over 30 min walk"
+  const mins = (m) => D.showLongWalks && m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? " " + (m % 60) + " min" : ""}` : `${m} min`;
+  const timeText = (h, a) => rmin(h, a.key) != null ? (a.profile === "foot" && rmin(h, a.key) > 30 && !D.showLongWalks ? "Over 30 min walk" : `${mins(rmin(h, a.key))} ${VERB[a.profile] || "trip"}`) : `${h.to[a.key].toFixed(1)} mi`;
 
   // ---------- list ----------
   const SORTS = { rent: (a, b) => a.rent - b.rent || a.n - b.n };
@@ -270,11 +294,14 @@ footer p { margin: 0 }
   list.innerHTML = D.homes.map((h) => {
     const anchorRows = A.map((a, i) => {
       const r = h.r && h.r[a.key];
-      const big = r ? `<span class="big">${r.min} min</span> ${VERB[a.profile] || "trip"} to ${esc(a.label)}` : `<span class="big">${h.to[a.key].toFixed(1)} mi</span> to ${esc(a.label)}`;
+      // a walk over 30 min is left off the card when the same place is also measured by car
+      if (a.profile === "foot" && r && r.min > 30 && A.some((x) => x !== a && x.label === a.label && x.profile !== "foot")) return "";
+      const big = r ? `<span class="big">${mins(r.min)}</span> ${VERB[a.profile] || "trip"} to ${esc(a.label)}` : `<span class="big">${h.to[a.key].toFixed(1)} mi</span> to ${esc(a.label)}`;
       const sub = (r ? `${r.mi.toFixed(1)} mi by route; ` : "") + `${h.to[a.key].toFixed(1)} mi straight-line.`;
       return `<div><dt class="dt-a${i}"><i></i>${esc(a.short)}</dt><dd>${big}<span class="sub">${sub}</span></dd></div>`;
     }).join("");
-    const prioRows = h.prio.map((p) => `<div><dt class="dt-p"><i></i>${esc(p.k)}</dt><dd>${esc(p.t)}${tag(p.c)}</dd></div>`).join("");
+    // a row with no label continues the row above it (e.g. several privacy facts under one "Privacy")
+    const prioRows = h.prio.map((p) => `<div><dt class="dt-p">${p.k ? "<i></i>" + esc(p.k) : ""}</dt><dd>${esc(p.t)}${tag(p.c)}</dd></div>`).join("");
     return `<article class="home st-${h.status}" id="h-${h.id}">
       <button class="head" data-id="${h.id}" aria-expanded="false" aria-controls="b-${h.id}">
         <span class="num">${h.n}</span>
@@ -314,7 +341,10 @@ footer p { margin: 0 }
 
   // filters: homes vs apartments (client.json "filters"; each listing has "kind") and the area row; both apply together
   let curFilter = "all", curArea = "all";
-  const shown = (h) => (curFilter === "all" || h.kind === curFilter) && (curArea === "all" || h.area === curArea);
+  // filter groups (client.json "filterGroups"): an option group matches String(home[field]); a toggle keeps only home[field] === true
+  const FG = D.filterGroups || [], gState = {};
+  const inGroups = (h) => FG.every((g) => g.toggle ? !gState[g.key] || h[g.field] === true : !gState[g.key] || gState[g.key] === "all" || String(h[g.field]) === gState[g.key]);
+  const shown = (h) => inGroups(h) && (curFilter === "all" || h.kind === curFilter) && (curArea === "all" || h.area === curArea);
   function applyView() {
     D.homes.forEach((h) => {
       const show = shown(h);
@@ -337,6 +367,27 @@ footer p { margin: 0 }
     applyFilter(D.filters.some((f) => f.key === saved) ? saved : "all");
   }
 
+  if (FG.length) {
+    const saved = store.get("groups:" + D.slug) || {};
+    $("#fgroups").innerHTML = FG.map((g) => g.toggle
+      ? `<button class="act tog" data-g="${esc(g.key)}" aria-pressed="false">${esc(g.label)} (${D.homes.filter((h) => h[g.field] === true).length})</button>`
+      : `<div class="seg" role="group" aria-label="${esc(g.label)}">${g.options.map((o) => {
+          const n = o.key === "all" ? D.homes.length : D.homes.filter((h) => String(h[g.field]) === o.key).length;
+          return `<button data-g="${esc(g.key)}" data-v="${esc(o.key)}" aria-pressed="false"${n ? "" : " disabled"}>${esc(o.label)} (${n})</button>`;
+        }).join("")}</div>`).join("");
+    $("#fgroups").hidden = false;
+    const paintGroups = () => document.querySelectorAll("#fgroups [data-g]").forEach((b) => b.setAttribute("aria-pressed",
+      b.dataset.v === undefined ? !!gState[b.dataset.g] : (gState[b.dataset.g] || "all") === b.dataset.v));
+    FG.forEach((g) => { gState[g.key] = g.toggle ? saved[g.key] === true : (g.options.some((o) => o.key === saved[g.key]) ? saved[g.key] : "all"); });
+    $("#fgroups").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-g]"); if (!b || b.disabled) return;
+      gState[b.dataset.g] = b.dataset.v === undefined ? !gState[b.dataset.g] : b.dataset.v;
+      store.set("groups:" + D.slug, gState); paintGroups(); applyView();
+      if (mapApi && mapApi.frameShown) mapApi.frameShown();
+    });
+    paintGroups(); applyView();
+  }
+
   // areas: the simplified bubble report. One card per area: homes, rent range, quickest time to the first anchor, places summary
   function applyArea(name, frame) {
     curArea = name;
@@ -350,12 +401,15 @@ footer p { margin: 0 }
     const card = (name, label, sum) => {
       const hs = D.homes.filter((h) => name === "all" || h.area === name);
       const rents = hs.map((h) => h.rent).filter(Boolean);
-      const times = hs.map((h) => rmin(h, A0.key)).filter((x) => x != null);
+      // quickest time to the first anchor; a walk over 30 min falls back to the same place by car (nobody walks 90 minutes)
+      let QA = A0, times = hs.map((h) => rmin(h, A0.key)).filter((x) => x != null);
+      const alt = A.find((a) => a !== A0 && a.label === A0.label && a.profile !== "foot");
+      if (A0.profile === "foot" && alt && times.length && Math.min(...times) > 30) { QA = alt; times = hs.map((h) => rmin(h, alt.key)).filter((x) => x != null); }
       const stat = hs.length
         ? `${hs.length} ${hs.length === 1 ? "home" : "homes"} · ${rents.length ? money(Math.min(...rents)) + (rents.length > 1 && Math.max(...rents) !== Math.min(...rents) ? "–" + money(Math.max(...rents)) : "") : ""}`
         : "No homes shortlisted here";
-      const mode = A0.profile === "foot" ? "walk" : A0.profile === "bike" ? "ride" : "drive";
-      const fast = times.length ? `<span class="stat">Quickest: ${Math.min(...times)} min ${mode} to ${esc(A0.label)}</span>` : "";
+      const mode = QA.profile === "foot" ? "walk" : QA.profile === "bike" ? "ride" : "drive";
+      const fast = times.length ? `<span class="stat">Quickest: ${Math.min(...times)} min ${mode} to ${esc(QA.label)}</span>` : "";
       return `<button class="area${hs.length ? "" : " empty"}" data-area="${esc(name)}" aria-pressed="false"><b>${esc(label)}</b><span class="stat">${stat}</span>${fast}${sum ? `<span class="sum">${esc(sum)}</span>` : ""}</button>`;
     };
     $("#areas").innerHTML = card("all", "All areas", "") + D.areas.map((a) => card(a.name, a.name, a.summary)).join("");
@@ -410,7 +464,7 @@ footer p { margin: 0 }
     const prioKeys = [...new Set(D.homes.flatMap((h) => h.prio.map((p) => p.k)))];
     const val = (list, k) => { const d = list.find((x) => x.k === k); return d ? esc(d.v ?? d.t) + tag(d.c) : "—"; };
     const rows = [["Rent", (h) => esc(h.rentText)]]
-      .concat(A.map((a) => [esc(a.label), (h) => timeText(h, a)]))
+      .concat(A.map((a) => [esc(A.filter((x) => x.label === a.label).length > 1 ? (VERB[a.profile] || "trip").replace(/^./, (c) => c.toUpperCase()) + " to " + a.label : a.label), (h) => timeText(h, a)]))
       .concat(prioKeys.map((k) => [esc(k), (h) => val(h.prio, k)]))
       .concat([["Size", (h) => val(h.details, "Size")],
                ["Misses", (h) => h.flags.filter((f) => f.l === "red").map((f) => esc(f.t)).join("<br>") || "None known"],
@@ -454,11 +508,12 @@ footer p { margin: 0 }
   renderCompare();
 
   // chips and the map note
-  $("#chips").innerHTML = A.map((a, i) => a.pin === false ? "" : `<button class="chip" id="t-a${i}" aria-pressed="true"><span class="apin a${i}">${esc(a.letter)}</span>${esc(a.label)}</button>`).join("")
+  $("#chips").innerHTML = A.map((a, i) => a.pin === false ? "" : `<button class="chip" id="t-a${i}" aria-pressed="true">${a.shape === "area" ? '<span class="sw sand"></span>' : a.shape === "line" ? `<span class="sw line" style="color:var(--a${i})"></span>` : `<span class="apin a${i}">${esc(a.letter)}</span>`}${esc(a.label)}</button>`).join("")
     + '<button class="chip" id="t-parks" aria-pressed="true"><span class="sw park"></span>Parks</button><button class="chip fit" id="t-fit">Show all homes</button>';
   const PLACES = [...new Set(A.map((a) => a.label))];
   const MOVER = A0.profile === "foot" ? "a walker follows" : A0.profile === "bike" ? "a bike rides" : "a car drives";
-  $("#map-note").textContent = `Tap a home to see its routes to ${PLACES.join(" and ")}; ${MOVER} the ${VERB[A0.profile] || ""} route to ${A0.label} (tap it to go again). ${D.routeNote} Pin color: green fits the brief as listed, gold has items to confirm, red misses part of the brief.`;
+  const BUILDINGS = D.homes.some((h) => h.building);
+  $("#map-note").textContent = `Tap a ${BUILDINGS ? "building" : "home"} to see its routes to ${PLACES.join(", ")}; ${MOVER} the ${VERB[A0.profile] || ""} route to ${A0.label} (tap it to go again). ${D.routeNote} ${BUILDINGS ? "Each pin is a building, with how many of its units are shown. " : ""}Pin color: green fits the brief as listed, gold has items to confirm, red misses part of the brief.`;
 
   if (!window.L) { $("#map").innerHTML = '<p class="note" style="padding:16px">The map could not load. The homes and distances below are complete.</p>'; return; }
 
@@ -506,24 +561,77 @@ footer p { margin: 0 }
   map.on("zoomend moveend", drawLabels);
 
   // the client's anchors
-  const anchorG = A.map((a, i) => a.pin === false ? L.layerGroup() : L.layerGroup([L.marker([a.lat, a.lon], { title: a.label, keyboard: false, zIndexOffset: 400,
-    icon: L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15], html: `<span class="apin big a${i}">${esc(a.letter)}</span>` }) })
-    .bindTooltip(esc(a.label), { className: "dist", direction: "top", offset: [0, -14] })]).addTo(map));
+  const anchorG = A.map((a, i) => {
+    if (a.pin === false) return L.layerGroup();
+    if (a.shape) {
+      const geo = ((D.shapes || {})[a.key] || { p: [] }).p.map((x) => decode(x, sc));
+      const lay = a.shape === "area"
+        ? add(L.polygon(geo, { pane: "base", weight: 0, fillOpacity: 1, interactive: false }), () => ({ fillColor: tok("--sand") }))
+        : add(L.polyline(geo, { weight: 6, opacity: .95, interactive: true }), () => ({ color: tok("--a" + i) })).bindTooltip(esc(a.label), { className: "dist", sticky: true });
+      return L.layerGroup([lay]).addTo(map);
+    }
+    return L.layerGroup([L.marker([a.lat, a.lon], { title: a.label, keyboard: false, zIndexOffset: 400,
+      icon: L.divIcon({ className: "", iconSize: [30, 30], iconAnchor: [15, 15], html: `<span class="apin big a${i}">${esc(a.letter)}</span>` }) })
+      .bindTooltip(esc(a.label), { className: "dist", direction: "top", offset: [0, -14] })]).addTo(map);
+  });
+  const dest = (h, a) => a.shape ? (h.pt && h.pt[a.key]) : [a.lat, a.lon];
 
-  // homes: units in the same building sit side by side, 30 px apart
   const byB = {};
-  D.homes.forEach((h) => { (byB[h.lat + "," + h.lon] = byB[h.lat + "," + h.lon] || []).push(h); });
   const markers = {};
-  Object.values(byB).forEach((g) => g.sort((a, b) => a.n - b.n).forEach((h, i) => {
-    const dx = (i - (g.length - 1) / 2) * 30;
-    const icon = (on) => L.divIcon({ className: "", iconSize: [34, 34], iconAnchor: [17 - dx, 17],
-      html: `<span class="pin st-${h.status}${on ? " on" : ""}">${h.n}</span>` });
-    const mk = L.marker([h.lat, h.lon], { icon: icon(false), title: `#${h.n} ${h.name} ${h.unit}`, riseOnHover: true, zIndexOffset: 500 }).addTo(map);
-    mk.on("click", () => select(h.id, "map"));
-    markers[h.id] = { mk, icon };
-  }));
+  let setPin, showHome;
+  if (BUILDINGS) {
+    // one pin per building: its name and how many of its units are shown; several units open a chooser
+    D.homes.forEach((h) => { const k = h.building || h.lat + "," + h.lon; (byB[k] = byB[k] || []).push(h); });
+    const RANK = { fit: 0, confirm: 1, miss: 2 };
+    Object.entries(byB).forEach(([k, units]) => {
+      units.sort((a, b) => a.n - b.n);
+      const b = { units, on: false };
+      b.vis = () => units.filter(shown);
+      b.icon = () => {
+        const v = b.vis(), st = v.reduce((m, h) => RANK[h.status] < RANK[m] ? h.status : m, "miss");
+        return L.divIcon({ className: "", iconSize: [0, 0],
+          html: `<span class="bpin st-${st}${b.on ? " on" : ""}"><span class="dot">${v.length}</span><span class="nm">${esc(units[0].name)}</span></span>` });
+      };
+      b.mk = L.marker([units[0].lat, units[0].lon], { icon: b.icon(), title: units[0].name, keyboard: true, riseOnHover: true, zIndexOffset: 500 }).addTo(map);
+      b.mk.on("click", () => {
+        const v = b.vis();
+        if (v.length === 1) { select(v[0].id, "map"); return; }
+        const box = document.createElement("div");
+        box.className = "bchoose";
+        box.innerHTML = `<b>${esc(units[0].name)}</b>` + v.map((h) => `<button data-id="${h.id}"><span>#${esc(h.unit || h.n)}</span><span>${esc(h.rentText)}</span></button>`).join("");
+        box.addEventListener("click", (e) => { const t = e.target.closest("button"); if (t) { map.closePopup(); select(t.dataset.id, "map"); } });
+        L.popup({ offset: [0, -14], autoPanPadding: [16, 16] }).setLatLng(b.mk.getLatLng()).setContent(box).openOn(map);
+      });
+      units.forEach((h) => { markers[h.id] = { b }; });
+    });
+    setPin = (id, on) => { const b = markers[id].b; b.on = on; b.mk.setIcon(b.icon()); };
+    // zoomed out, a building pin shows only its unit count so nearby buildings don't cover each other
+    const far = () => map.getContainer().classList.toggle("far", map.getZoom() < 14.5);
+    map.on("zoomend", far);
+    far();
+    showHome = () => Object.values(byB).forEach((units) => {
+      const b = markers[units[0].id].b, any = b.vis().length > 0;
+      any ? b.mk.addTo(map) : map.removeLayer(b.mk);
+      if (any) b.mk.setIcon(b.icon());
+    });
+  } else {
+    // homes: units in the same building sit side by side, 30 px apart
+    D.homes.forEach((h) => { (byB[h.lat + "," + h.lon] = byB[h.lat + "," + h.lon] || []).push(h); });
+    Object.values(byB).forEach((g) => g.sort((a, b) => a.n - b.n).forEach((h, i) => {
+      const dx = (i - (g.length - 1) / 2) * 30;
+      const icon = (on) => L.divIcon({ className: "", iconSize: [34, 34], iconAnchor: [17 - dx, 17],
+        html: `<span class="pin st-${h.status}${on ? " on" : ""}">${h.n}</span>` });
+      const mk = L.marker([h.lat, h.lon], { icon: icon(false), title: `#${h.n} ${h.name} ${h.unit}`, riseOnHover: true, zIndexOffset: 500 }).addTo(map);
+      mk.on("click", () => select(h.id, "map"));
+      markers[h.id] = { mk, icon };
+    }));
+    setPin = (id, on) => markers[id].mk.setIcon(markers[id].icon(on));
+    showHome = (id, on) => { const m = markers[id].mk; on ? m.addTo(map) : map.removeLayer(m); };
+  }
 
-  const allBounds = L.latLngBounds(D.homes.map((h) => [h.lat, h.lon]).concat(A.map((a) => [a.lat, a.lon]))).pad(0.06);
+  // frame the homes and the places; a line or area anchor counts by the points nearest each home, not its whole length
+  const allBounds = L.latLngBounds(D.homes.map((h) => [h.lat, h.lon])
+    .concat(A.flatMap((a) => a.shape ? D.homes.map((h) => dest(h, a)).filter(Boolean) : [[a.lat, a.lon]]))).pad(0.06);
   const fitAll = () => map.fitBounds(allBounds, { padding: [20, 20] });
   fitAll();
   drawLabels();
@@ -551,25 +659,26 @@ footer p { margin: 0 }
     };
     anim = requestAnimationFrame(step);
   }
-  const ROUTE_TOK = ["--a0", "--a1", "--a2"];
+  const ROUTE_TOK = ["--a0", "--a1", "--a2", "--a3", "--a4"];
   function select(id, from) {
     const h = D.homes.find((x) => x.id === id);
-    if (cur) markers[cur].mk.setIcon(markers[cur].icon(false));
+    if (cur) setPin(cur, false);
     cur = id;
-    markers[id].mk.setIcon(markers[id].icon(true));
+    setPin(id, true);
     selG.clearLayers();
     const p = [h.lat, h.lon];
     let all = [p], first = null;
     // the first anchor is drawn last, so its route sits on top where the routes overlap
     A.map((a, i) => [a, i]).reverse().forEach(([a, i]) => {
       const r = h.r && h.r[a.key];
-      const pts = r ? decode(r.p, sc) : [p, [a.lat, a.lon]];
+      const to = dest(h, a) || p;
+      const pts = r ? decode(r.p, sc) : [p, to];
       if (i === 0) first = pts;
       all = all.concat(pts);
       const t = ROUTE_TOK[i] || "--ink";
       selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 8, opacity: .9, interactive: false }), () => ({ color: tok("--walk-casing") })).setStyle({ color: tok("--walk-casing") }));
       selG.addLayer(add(L.polyline(pts, { pane: "sel", weight: 4.5, interactive: false, dashArray: r ? null : "4 8" }), () => ({ color: tok(t) })).setStyle({ color: tok(t) }));
-      selG.addLayer(L.circleMarker([a.lat, a.lon], { pane: "sel", radius: 1, opacity: 0, fillOpacity: 0, interactive: false })
+      selG.addLayer(L.circleMarker(to, { pane: "sel", radius: 1, opacity: 0, fillOpacity: 0, interactive: false })
         .bindTooltip(timeText(h, a) + " to " + esc(a.label), { permanent: true, className: "dist", direction: i ? "bottom" : "top", offset: i ? [0, 14] : [0, -16] }));
     });
     const rider = L.marker(p, { pane: "sel", interactive: true, keyboard: false, title: "Go again",
@@ -581,10 +690,14 @@ footer p { margin: 0 }
     map.once("moveend", () => drive(first, rider));
     if (from === "map") { openCard(id); document.getElementById("h-" + id).scrollIntoView({ block: "nearest", behavior: "smooth" }); }
   }
-  mapApi = { select, show: (id, on) => { const m = markers[id].mk; on ? m.addTo(map) : map.removeLayer(m); if (!on && cur === id) { cancelAnimationFrame(anim); selG.clearLayers(); cur = null; } } };
+  mapApi = { select, show: (id, on) => { showHome(id, on); if (!on && cur === id) { cancelAnimationFrame(anim); selG.clearLayers(); setPin(cur, false); cur = null; } } };
+  mapApi.frameShown = () => {
+    const hs = D.homes.filter(shown);
+    if (hs.length) map.fitBounds(L.latLngBounds(hs.map((h) => [h.lat, h.lon])).pad(0.3), { maxZoom: 16, padding: [20, 20] });
+  };
   mapApi.frameArea = (name) => {
     cancelAnimationFrame(anim); selG.clearLayers();
-    if (cur) { markers[cur].mk.setIcon(markers[cur].icon(false)); cur = null; }
+    if (cur) { setPin(cur, false); cur = null; }
     const hs = D.homes.filter(shown);
     const a = (D.areas || []).find((x) => x.name === name);
     if (name === "all" || !a) { fitAll(); return; }
@@ -605,7 +718,7 @@ footer p { margin: 0 }
   });
   A.forEach((a, i) => { if (a.pin !== false) toggle("#t-a" + i, anchorG[i]); });
   toggle("#t-parks", parkG);
-  $("#t-fit").addEventListener("click", () => { cancelAnimationFrame(anim); selG.clearLayers(); if (cur) markers[cur].mk.setIcon(markers[cur].icon(false)); cur = null; fitAll(); });
+  $("#t-fit").addEventListener("click", () => { cancelAnimationFrame(anim); selG.clearLayers(); if (cur) setPin(cur, false); cur = null; fitAll(); });
 
   const restyle = () => styled.forEach(([l, fn]) => l.setStyle(fn()));
   restyle();
