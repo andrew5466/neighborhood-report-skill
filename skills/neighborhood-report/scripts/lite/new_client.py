@@ -108,7 +108,7 @@ def main(argv):
     cfg = {"_about": "Map Lite config for %s, started by new_client.py. Edit lede, notes, sources and OneHome links." % title,
            "mode": "anchors", "layout": "buildings", "noFlags": True, "noMover": True, "maxWalkMin": 20,
            "slug": slug(title) or root.name.lower(), "title": title,
-           "lede": "{n} homes in %d buildings. Each shows how far it is to %s." % (len({L["building"] for L in listings}),
+           "lede": "{n} units in %d buildings. Each shows how far it is to %s." % (len({L["building"] for L in listings}),
                                                                                  join_and([a["label"] for a in anchors]) or "the places that matter to you"),
            "byline": "Prepared by Andrew Garcia · AMG Group at PMG Residential", "notes": [],
            "sources": "MLS and listing pages. Streets and beach: © OpenStreetMap contributors. Walking times: OpenStreetMap routing estimates from each building's address.",

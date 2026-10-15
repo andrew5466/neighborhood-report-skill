@@ -389,10 +389,10 @@ details.binfo .facts { padding-bottom: 12px }
       const v = unitsOf(b).filter(shown), row = document.getElementById("bld-" + b);
       row.hidden = !v.length; if (v.length) nb++;
       const rents = v.map((h) => h.rent), beds = [...new Set(v.map((h) => h.beds))].sort();
-      document.querySelector(`[data-sum="${b}"]`).textContent = `${v.length} ${v.length === 1 ? "home" : "homes"} · ${beds.map((x) => x + " bed").join(", ")}`;
+      document.querySelector(`[data-sum="${b}"]`).textContent = `${v.length} ${v.length === 1 ? "unit" : "units"} · ${beds.map((x) => x + " bed").join(", ")}`;
       document.querySelector(`[data-range="${b}"]`).textContent = rents.length ? money(Math.min(...rents)) + (Math.max(...rents) !== Math.min(...rents) ? "–" + money(Math.max(...rents)) : "") : "";
     });
-    $("#count").textContent = `${n} ${n === 1 ? "home" : "homes"} in ${nb} ${nb === 1 ? "building" : "buildings"}`;
+    $("#count").textContent = `${n} ${n === 1 ? "unit" : "units"} in ${nb} ${nb === 1 ? "building" : "buildings"}`;
     if (mapApi) mapApi.refresh();
   }
   if (FG.length) {
@@ -477,7 +477,7 @@ details.binfo .facts { padding-bottom: 12px }
   applyView();
 
   // ---------- the map: one dot per building; tap = its walking routes and a jump to its line ----------
-  $("#map-note").textContent = "Each dot is a building and its number of homes. Tap one to see its walks.";
+  $("#map-note").textContent = "Each dot is a building and its number of units. Tap one to see its walks.";
   if (!window.L) { $("#map").innerHTML = '<p class="note" style="padding:16px">The map could not load. The buildings below are complete.</p>'; return; }
   const B = D.base, sc = B.scale, fr = B.frame;
   const map = L.map("map", { preferCanvas: true, zoomSnap: 0.25, minZoom: 11.5, maxZoom: 18, scrollWheelZoom: false,
